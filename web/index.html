@@ -70,6 +70,15 @@
   <p class="hud-note">Aggregate counters only: no prompts or replies are read.</p>
 </section>
 
+<button class="skyinfo" id="sky-info" aria-controls="sky-time" aria-expanded="false" hidden></button>
+<section class="skytime glass" id="sky-time" aria-label="Time in orbit" hidden>
+  <div class="st-h"><b>Time in orbit</b><span class="mono" id="st-when">Now · live</span><span class="sp"></span>
+    <button class="btn sm" id="st-live" disabled>Live</button><button class="panel-x" id="st-x" aria-label="Close">×</button></div>
+  <div class="st-track"><canvas id="st-strip" aria-hidden="true"></canvas><input type="range" id="st-range" min="0" max="1440" step="1" value="0" aria-label="Minutes ahead of now, up to 24 hours"></div>
+  <div class="st-key"><span><i class="d"></i>ground in daylight</span><span><i class="t"></i>twilight</span><span><i class="n"></i>night</span><span class="pl"><i class="p"></i>pass</span></div>
+  <div class="st-passes" id="st-passes" hidden></div>
+  <p class="st-note">The scene keeps orbiting from the moment you pick; <b>Live</b> returns to now.</p>
+</section>
 <div class="toast" id="toast" role="status" hidden></div>
 <div class="hint" id="hint">Drag to orbit · scroll to zoom · click anything glowing · <kbd>←</kbd><kbd>→</kbd> steps · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> depth · <kbd>Space</kbd> play · <kbd>L</kbd> live</div>
 <div class="loading" id="loading"><div class="spin"></div><span>Reading the model…</span></div>

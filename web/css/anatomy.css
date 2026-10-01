@@ -59,7 +59,7 @@ button.btn{font-family:inherit;cursor:pointer}
 .bar{display:grid;grid-template-columns:96px 1fr 46px;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px}
 .bar .t{color:var(--ink);white-space:pre;overflow:hidden;text-overflow:ellipsis}
 .bar .track{height:8px;border-radius:99px;background:var(--panel-3);overflow:hidden}
-.bar .fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--sc,var(--accent)),color-mix(in srgb,var(--sc,var(--accent)) 50%,#fff));transition:width .5s}
+.bar .fill{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--sc,var(--accent)),color-mix(in srgb,var(--sc,var(--accent)) 50%,#fff));transition:width .5s}
 .bar.win .t{color:var(--sc,var(--accent));font-weight:600}
 .bar .p{color:var(--ink-3);text-align:right}
 .stepper{display:flex;align-items:center;gap:8px;margin:8px 0 2px;font-size:12px;color:var(--ink-3)}
@@ -122,6 +122,36 @@ button.btn{font-family:inherit;cursor:pointer}
 .hint{position:fixed;right:18px;bottom:16px;z-index:10;font-size:11px;color:var(--ink-4);transition:opacity .4s}
 .hint kbd{font-family:var(--mono);font-size:10px;border:1px solid var(--hair-2);border-bottom-width:2px;border-radius:4px;padding:0 4px;margin:0 1px;color:var(--ink-3)}
 body.panel-open .hint,body.touring .hint{opacity:0}
+.skyinfo{all:unset;position:fixed;left:14px;bottom:12px;z-index:10;font-size:11px;color:var(--ink-4);font-variant-numeric:tabular-nums;cursor:pointer;padding:4px 6px;border-radius:7px;transition:opacity .4s,color .15s,background .15s}
+.skyinfo b{font-weight:500;color:var(--ink-3)}
+.skyinfo:hover,.skyinfo[aria-expanded="true"]{color:var(--ink-2);background:color-mix(in srgb,var(--panel) 60%,transparent)}
+.skyinfo:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.skyinfo.ahead b{color:var(--accent-ink)}
+body.live .skyinfo,body.touring .skyinfo,body.live .skytime,body.touring .skytime{opacity:0;pointer-events:none}
+.skytime{position:fixed;left:18px;bottom:44px;z-index:26;width:min(440px,calc(100vw - 36px));border-radius:14px;padding:12px 14px 12px;animation:stin .25s cubic-bezier(.2,.8,.2,1)}
+@keyframes stin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.skyinfo[hidden],.skytime[hidden],.st-passes[hidden]{display:none}
+.skytime .st-h{display:flex;align-items:center;gap:10px;font-size:12.5px}
+.skytime .st-h .mono{font-size:11px;color:var(--ink-3)}
+.skytime .sp{flex:1}
+.skytime .panel-x{position:static;width:26px;height:26px;font-size:18px}
+.st-track{position:relative;height:46px;margin:10px 0 4px}
+#st-strip{position:absolute;inset:0;width:100%;height:100%}
+#st-range{position:absolute;left:0;right:0;top:6px;width:100%;height:24px;margin:0;background:transparent;-webkit-appearance:none;appearance:none;cursor:ew-resize}
+#st-range::-webkit-slider-runnable-track{height:24px;background:transparent}
+#st-range::-moz-range-track{height:24px;background:transparent}
+#st-range::-webkit-slider-thumb{-webkit-appearance:none;width:4px;height:26px;margin-top:-1px;border-radius:2px;background:var(--ink);box-shadow:0 0 0 2px color-mix(in srgb,var(--page) 70%,transparent),0 0 12px color-mix(in srgb,var(--ink) 60%,transparent)}
+#st-range::-moz-range-thumb{width:4px;height:26px;border:0;border-radius:2px;background:var(--ink);box-shadow:0 0 0 2px color-mix(in srgb,var(--page) 70%,transparent),0 0 12px color-mix(in srgb,var(--ink) 60%,transparent)}
+#st-range:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:5px}
+.st-key{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:10.5px;color:var(--ink-4)}
+.st-key i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.st-key .d{background:rgba(110,180,255,.8)}.st-key .t{background:rgba(255,150,80,.5)}.st-key .n{background:var(--panel-3);border:1px solid var(--hair-2)}
+.st-key .p{width:0;height:0;border-radius:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:7px solid var(--accent-ink)}
+.st-key .pl{display:none}.skytime:has(.st-passes:not([hidden])) .st-key .pl{display:inline}
+.st-passes{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:10px}
+.st-passes .k{flex-basis:100%;font-size:10.5px;color:var(--ink-3);letter-spacing:.04em}
+.st-passes .btn.sm{height:24px;padding:0 8px;font-size:11.5px;font-variant-numeric:tabular-nums}
+.st-note{margin:10px 0 0;font-size:10.5px;color:var(--ink-4)}
 .loading{position:fixed;inset:0;z-index:50;display:grid;place-content:center;justify-items:center;gap:14px;background:var(--page);color:var(--ink-3);font-size:13px;transition:opacity .8s}
 .loading.gone{opacity:0;pointer-events:none}
 .spin{width:30px;height:30px;border-radius:50%;border:2px solid var(--hair-2);border-top-color:var(--c-agent);animation:sp 1s linear infinite}
@@ -138,7 +168,7 @@ body.panel-open .hint,body.touring .hint{opacity:0}
   .hud{left:10px;right:10px;width:auto;bottom:10px}
   body.panel-open .hud{display:none}
   .caption{bottom:10px}
-  .hint{display:none}
+  .hint,.skyinfo,.skytime{display:none}
   .modes .btn .lbl{display:none}
 }
 @media (prefers-reduced-motion:reduce){.panel,.caption{animation:none}}
@@ -148,7 +178,7 @@ body.panel-open .hint,body.touring .hint{opacity:0}
 .hud-model{flex-basis:100%;margin-left:0;max-width:none;order:3;margin-top:2px}
 body.live .journey{max-height:calc(100vh - 84px - 260px)}
 @media (max-width:900px){body.live .journey{max-height:none}}
-body.shot .ana-top,body.shot .journey,body.shot .hint,body.shot .hud,body.shot .panel,body.shot .caption{display:none!important}
+body.shot .ana-top,body.shot .journey,body.shot .hint,body.shot .skyinfo,body.shot .skytime,body.shot .hud,body.shot .panel,body.shot .caption{display:none!important}
 @media (max-width:560px){
   .ana-top .brand h1{font-size:13px;white-space:nowrap}
   .ana-top .brand-mark{width:30px;height:30px;font-size:15px}
@@ -261,3 +291,7 @@ body.panel-open .banner{left:300px}
 .banner-x{all:unset;cursor:pointer;margin-left:auto;font-size:16px;color:var(--ink-3);padding:0 4px}
 @media (max-width:900px){.banner,body.panel-open .banner{left:10px;right:10px;bottom:auto;top:118px;max-width:none;min-width:0}}
 body.shot .banner,body.shot .toast{display:none!important}
+
+/* Record mode (record/render.mjs): no cursor, hints, banners or toasts in the frames */
+body.record, body.record *{cursor:none!important}
+body.record .hint, body.record .skyinfo, body.record .skytime, body.record .banner, body.record .toast{display:none!important}

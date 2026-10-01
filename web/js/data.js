@@ -1,6 +1,9 @@
 /* Where the page gets its facts: the probe beside the model server, or a saved snapshot (demo mode).
  * Configure with window.ANATOMY = { api: 'api/', snapshot: 'data/snapshot/' } before main.js loads. */
-const CFG = Object.assign({ api: 'api/', snapshot: 'data/snapshot/', maxTokens: 32 }, window.ANATOMY || {});
+const CFG = Object.assign({ api: 'api/', snapshot: 'data/snapshot/', maxTokens: 32, sky: {} }, window.ANATOMY || {});
+{ const q = new URLSearchParams(location.search), at = Date.parse(q.get('skyat') || ''), warp = +q.get('skywarp');
+  if (/^(0|off|false)$/.test(q.get('sky') || '')) CFG.sky = null;                     // ?sky=0: the plain dark background
+  else if (CFG.sky) CFG.sky = { ...CFG.sky, ...(isFinite(at) ? { at } : {}), ...(warp > 0 ? { warp } : {}) }; }   // ?skyat=ISO time, ?skywarp=60: preview another moment, faster
 { const s = new URLSearchParams(location.search).get('snapshot'); if (s && /^[\w-]+$/.test(s)) CFG.snapshot = `data/${s}/`; }   // ?snapshot=<folder under data/>: another saved model
 export const config = CFG;
 

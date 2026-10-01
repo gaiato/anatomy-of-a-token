@@ -5,12 +5,14 @@ import { $, esc, clamp, int, count, bytes, pct, ms, showTok, tag, REDUCED } from
 import { viewModel, traceModel } from './model.js';
 import { buildScene } from './scene.js';
 import { steps as buildSteps, stationTitles, PHASES, STATION_STEP, MIXNAME } from './story.js';
+import { skyTime } from './skytime.js';
 import { config, loadProfile, loadSnapshotTraces, runTrace, status } from './data.js';
 
 const store = { get(k) { try { return sessionStorage.getItem(k); } catch { return null; } }, set(k, v) { try { sessionStorage.setItem(k, v); } catch { } },
   lget(k) { try { return localStorage.getItem(k); } catch { return null; } }, lset(k, v) { try { localStorage.setItem(k, v); } catch { } } };
 const TIERS = ['Overview', 'Technical', 'Under the hood'];
 const DEFAULT_PROMPTS = ['Why does ice float on water?', 'Write a haiku about autumn leaves.', 'What is 17 times 23?'];
+const RECORD = new URLSearchParams(location.search).has('record');   // driven frame by frame by record/render.mjs
 
 const { profile, demo, reason } = await loadProfile();
 const M = viewModel(profile);
@@ -32,7 +34,7 @@ $('banner').addEventListener('click', e => { if (e.target.closest('.banner-x')) 
 
 /* ── Scene ── */
 const W = { steps: [], i: 0, tier: clamp(+(store.lget('anatomy-tier') || 1), 1, 3), playing: false, speed: 1, e: 0, open: false, probsIdx: 0, layer: -1 };
-const S = buildScene(M, { titles: stationTitles(M), shot: new URLSearchParams(location.search).has('shot'), onPick, onFrame, onDecodeStep: si => { if (cur()?.widget === 'steps') markStep(si); } });
+const S = buildScene(M, { titles: stationTitles(M), shot: new URLSearchParams(location.search).has('shot'), keep: RECORD, sky: config.sky, onPick, onFrame, onDecodeStep: si => { if (cur()?.widget === 'steps') markStep(si); } });
 if (T) S.setTrace(T);
 W.steps = buildSteps(M, ctx());
 function ctx() { return { trace: T, demo, maxTokens: config.maxTokens }; }
@@ -105,7 +107,7 @@ $('panel-body').addEventListener('click', e => {
   const l = e.target.closest('[data-layer]'); if (l) { openLayer(+l.dataset.layer); return; }
   const st = e.target.closest('[data-step]'); if (st && T) { S.decodeStep?.(); markStep(+st.dataset.step); return; }
 });
-function setTier(t) { W.tier = clamp(t, 1, 3); store.lset('anatomy-tier', W.tier); const sc = $('panel').scrollTop; renderPanel(); $('panel').scrollTop = sc; }
+function setTier(t) { W.tier = clamp(t, 1, 3); store.lset('anatomy-tier', W.tier); if (!W.open) return; const sc = $('panel').scrollTop; renderPanel(); $('panel').scrollTop = sc; }
 $('wt-prev').onclick = () => go(W.i - 1);
 $('wt-next').onclick = () => go(W.i + 1);
 $('wt-play').onclick = () => togglePlay();
@@ -300,5 +302,11 @@ document.querySelectorAll('[data-ic]').forEach(el => { const I = { chip: '<rect 
   pulse: '<path d="M3 12h4l2.5-6 5 12 2.5-6h4"/>', ask: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>', back: '<path d="M15 18l-6-6 6-6"/>' }[el.dataset.ic];
   el.innerHTML = `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I || ''}</svg>`; });
 if (new URLSearchParams(location.search).has('shot')) document.body.classList.add('shot');
-setTimeout(() => { $('loading').classList.add('gone'); if (!routed && !REDUCED) setTimeout(() => S.flyTo(S.VIEWS.overview, 3.2), 900); }, 250);
-window.__viz = { stats: () => ({ ...S.stats(), step: W.open ? cur().id : null, tier: W.tier, live: live.on, demo, model: M.id, trace: T ? { n: T.n, out: T.nOut, steps: T.steps.length } : null }), go, overview, setTier, M, steps: () => W.steps.map(s => s.id) };
+if (RECORD) { document.body.classList.add('record'); $('banner').hidden = true; }
+setTimeout(() => { $('loading').classList.add('gone'); if (!routed && !REDUCED && !RECORD) setTimeout(() => S.flyTo(S.VIEWS.overview, 3.2), 900); }, 250);
+/* ── Where the background is, and the time slider ── */
+if (S.sky) skyTime(S.sky, config.sky);
+
+window.__viz = { sky: () => S.sky?.info(), stats: () => ({ ...S.stats(), step: W.open ? cur().id : null, tier: W.tier, live: live.on, demo, model: M.id, trace: T ? { n: T.n, out: T.nOut, steps: T.steps.length } : null }), go, overview, setTier, M, steps: () => W.steps.map(s => s.id),
+  // for record mode: the scene, the current trace, and switching to a saved question
+  S, get T() { return T; }, step: id => go(W.steps.findIndex(s => s.id === id)), useSnapshot: text => { const t = snaps.find(x => x.prompt.text === text); if (t) useTrace(t, false); return !!t; } };

@@ -1,0 +1,51 @@
+{
+  "name": "launch",
+  "about": "The launch video: one question's trip through the server, about 55 s. Captions are templates over the real data ({{...}} sees M = model, T = trace).",
+  "viewport": "1280x720",
+  "scale": 1.5,
+  "fps": 60,
+  "duration": 56,
+  "capWidth": 700,
+  "timeline": [
+    { "at": 0, "question": "Why does ice float on water?", "tier": 1, "hide": [".journey"] },
+    { "at": 0, "view": "exterior", "dur": 0 },
+    { "at": 0, "orbit": { "deg": 26, "dur": 5 } },
+    { "at": 0.3, "card": { "title": "Anatomy of a Token", "sub": "What actually happens inside an AI server when it answers your question", "dur": 4.4, "scrim": 0.5 } },
+
+    { "at": 4.6, "overview": 2.8 },
+    { "at": 5.4, "caption": { "text": "A real model, on a real machine.", "sub": "{{M.name}} · {{M.L}} layers · {{M.moe.experts}} experts · {{M.hw.title}}", "dur": 3.9 } },
+
+    { "at": 9.2, "step": "prompt" },
+    { "at": 9.6, "caption": { "text": "You ask a question.", "sub": "{{q(T.text)}}", "dur": 3.2, "color": "#5b9cff" } },
+
+    { "at": 12.8, "step": "tokenize" },
+    { "at": 12.8, "view": "tokenizer", "back": 1.7, "dur": 1.8 },
+    { "at": 13.4, "caption": { "text": "It becomes {{T.n}} tokens.", "sub": "Pieces of words, each a number the model knows.", "dur": 3.8, "color": "#9b7cf0" } },
+
+    { "at": 17.2, "step": "stack" },
+    { "at": 17.8, "caption": { "text": "Every token flows through all {{M.L}} layers.", "sub": "Each layer reads the whole sentence so far and adds to each token’s meaning.", "dur": 4.0, "color": "#2fd1b2" } },
+
+    { "at": 21.8, "step": "ffn" },
+    { "at": 22.4, "caption": { "text": "In each layer, {{M.moe.top_k}} of {{M.moe.experts}} experts wake up.", "sub": "The rest stay idle. That is how a huge model stays fast.", "dur": 4.2, "color": "#ff9a4d" } },
+
+    { "at": 26.4, "step": "head" },
+    { "at": 27.0, "caption": { "text": "It scores all {{int(M.vocab)}} possible next tokens…", "sub": "These are its real top five, from the server.", "dur": 3.8, "color": "#ff6b5b" } },
+
+    { "at": 30.8, "step": "sample" },
+    { "at": 31.4, "caption": { "text": "…and picks one: {{q(T.out[0].text)}} at {{pct(T.out[0].p, 1)}}.", "sub": "Then it does it again, for the next token.", "dur": 3.6, "color": "#ff6b5b" } },
+
+    { "at": 35.0, "step": "spec" },
+    { "at": 35.6, "caption": { "text": "Guess {{M.spec.k}} ahead, check them all at once.", "sub": "A small drafter guesses; the model keeps every guess it agrees with.", "dur": 4.4, "color": "#9b7cf0" } },
+
+    { "at": 40.0, "step": "decode" },
+    { "at": 40.6, "caption": { "text": "{{T.nOut}} tokens in {{T.steps.length}} steps.", "sub": "Each step runs only the newest tokens. The prompt is never read again.", "dur": 4.4, "color": "#2fd1b2" } },
+
+    { "at": 45.0, "step": "stream" },
+    { "at": 45.6, "caption": { "text": "And the answer streams back.", "sub": "{{q(T.reply.slice(0, 64))}}…", "dur": 3.6, "color": "#5b9cff" } },
+
+    { "at": 49.2, "overview": 0 },
+    { "at": 49.2, "js": "document.getElementById('panel').hidden = true; document.body.classList.remove('panel-open'); window.__viz.S.panelW = 0;" },
+    { "at": 49.2, "view": "exterior", "dur": 5.5 },
+    { "at": 49.4, "card": { "title": "Every number here is real.", "sub": "Read from the model’s own files and the server, live. Try it on your model, on your hardware.", "url": "github.com/gaiato/anatomy-of-a-token", "dur": 6.6, "scrim": 0.8 } }
+  ]
+}

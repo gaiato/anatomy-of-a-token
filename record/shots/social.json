@@ -1,0 +1,16 @@
+{
+  "name": "social",
+  "about": "GitHub social preview / README hero, 1280×640: render with --stills 3.",
+  "viewport": "1280x640",
+  "scale": 1,
+  "fps": 30,
+  "duration": 3.2,
+  "capWidth": 760,
+  "timeline": [
+    { "at": 0, "question": "Why does ice float on water?", "hide": [".journey", ".topbar"] },
+    { "at": 0, "view": "overview", "dur": 0 },
+    { "at": 0, "orbit": { "deg": -8, "dur": 3.2 } },
+    { "at": 0.2, "js": "window.__viz.S.beat('stack')" },
+    { "at": 0, "caption": { "text": "Anatomy of a Token", "sub": "An explorable 3D walkthrough of what happens inside an LLM server when it answers you. On your model, on your hardware.", "dur": 30 } }
+  ]
+}

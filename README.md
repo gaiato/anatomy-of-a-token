@@ -47,7 +47,7 @@ Make your own snapshot to share: `python3 -m anatomy_probe snapshot --engine URL
 
 ## Privacy
 
-The probe stores nothing. A visitor’s question exists only for the length of the request: it is tokenized, answered (capped at 48 tokens), and the result returned to that browser. Prompts are never logged. The page asks visitors not to type personal information. Live mode reads only aggregate counters (tokens per second, cache use), never anyone’s prompts or replies. Launch flags pass an allowlist, so API keys and paths never leave the machine.
+The probe stores nothing. A visitor’s question exists only for the length of the request: it is tokenized, answered (capped at 48 tokens), and the result returned to that browser. Prompts are never logged. The page asks visitors not to type personal information. Live mode reads only aggregate counters (tokens per second, cache use), never anyone’s prompts or replies. Launch flags pass an allowlist, so API keys and paths never leave the machine. The background (below) asks CelesTrak for the space station's latest orbital elements, at most once every six hours per browser; set `sky: { orbit: null }` in `web/config.js` to use the bundled elements and make no outside request, or `sky: null` for a plain background.
 
 ## How it fits together
 
@@ -63,9 +63,17 @@ browser ── GET /api/profile ──▶ anatomy-probe ── reads ──▶ c
 | `probe/anatomy_probe/` | the probe: `profile.py` (normaliser), `weights.py` (safetensors + GGUF headers), `engine.py` (vLLM / llama.cpp), `launch.py`, `hardware.py`, `server.py` |
 | `web/js/model.js` | profile + trace → every number the page shows |
 | `web/js/scene.js` | the three.js scene, built from the view model |
+| `web/js/sky.js` | the background: the station's orbit, Earth, Sun, Moon and stars, computed from the clock |
 | `web/js/story.js` | the walkthrough: 18 steps × 3 depths, templated over the model and your request |
 | `web/js/packs/` | optional hand-written notes for specific models and hardware |
 | `docs/` | the profile format and how to write a pack |
+| `record/` | turns the walkthrough into a video, frame by frame, from a JSON shot list (see `record/README.md`) |
+
+## The view from orbit
+
+Behind the scene is the view from the International Space Station, right now: the station's position from its orbital elements (fetched from CelesTrak, with a bundled fallback), Earth turning beneath it at the real sidereal rate with day, night and city lights where they are this minute, the Sun and the Moon where they are, and 9,096 stars from the Yale Bright Star Catalogue precessed to today, over NASA's Milky Way map. The floor of the scene faces away from Earth and the server flies along the orbit, so the ground slides by at 7.7 km/s and the stars turn once every 92 minutes. A note in the corner says where the station is; click it for a slider over the next 24 hours of orbit, its strip showing where the ground below is in daylight, so you can choose the view (the scene keeps orbiting from there; **Live** returns to now). List places in `sky.places` in `web/config.js` and the slider marks the passes over them. `web/js/sky.js` is the code; `web/data/sky/SOURCES.md` lists the data and credits.
+
+To preview another moment: `?skyat=2026-10-01T21:25Z` (any ISO time), `?skywarp=60` (sixty times faster). `?sky=0` turns it off.
 
 ## Packs: adding what no config file says
 
@@ -87,8 +95,8 @@ If your audience is students, read **Privacy** above and consider leaving the pa
 
 ## License
 
-MIT, see `LICENSE`. three.js under `web/vendor/` keeps its own MIT license.
+MIT, see `LICENSE`. three.js under `web/vendor/` keeps its own MIT license. The sky data under `web/data/sky/` is public-domain or NASA imagery used with credit; see `web/data/sky/SOURCES.md`.
 
 ## Credits
 
-Built in a home lab with Claude Code. The first version’s telemetry parser and headless test harness were written by a local model running on the same GX10 the page describes. three.js (MIT) is vendored under `web/vendor/`.
+Built in a home lab with Claude Code. The first version’s telemetry parser and headless test harness were written by a local model running on the same GX10 the page describes. three.js (MIT) is vendored under `web/vendor/`. Sky: Yale Bright Star Catalogue (Hoffleit & Warren); NASA Earth Observatory (Blue Marble Next Generation, Black Marble); NASA/Goddard Scientific Visualization Studio (Deep Star Maps 2020, with Gaia DR2: ESA/Gaia/DPAC); orbital elements from CelesTrak.

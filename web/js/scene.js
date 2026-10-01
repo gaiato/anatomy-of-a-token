@@ -11,6 +11,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { $, esc, clamp, lerp, ease, REDUCED, showTok, int, count } from './util.js';
+import { buildSky } from './sky.js';
 
 const rnd = (() => { let s = 1234567; return () => ((s = (s * 16807) % 2147483647) / 2147483647); })();   // seeded: same scene every load
 
@@ -34,7 +35,7 @@ export function buildScene(M, hooks = {}) {
 
   /* ── Renderer, camera, post ── */
   const canvas = $('gl');
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: !!hooks.shot });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: !!(hooks.shot || hooks.keep) });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.setSize(innerWidth, innerHeight);
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
@@ -55,6 +56,8 @@ export function buildScene(M, hooks = {}) {
   labels.setSize(innerWidth, innerHeight);
   $('labels').appendChild(labels.domElement);
   scene.add(new THREE.HemisphereLight('#9fb4ff', '#0b0d12', 0.55));
+  const sky = hooks.sky ? buildSky(scene, camera, renderer, hooks.sky) : null;   // the view from orbit behind everything
+  if (sky) scene.background = null;
   const key = new THREE.DirectionalLight('#ffffff', 1.4); key.position.set(8, 14, 10); scene.add(key);
   const rim = new THREE.DirectionalLight(COL.agent, 0.6); rim.position.set(-10, 6, -12); scene.add(rim);
 
@@ -595,6 +598,7 @@ export function buildScene(M, hooks = {}) {
     for (let i = waves.length - 1; i >= 0; i--) if (waves[i].x > TOWER.x1 + 1) waves.splice(i, 1);
     for (const s of slabs) {
       let g = 0; for (const w of waves) { const d = (s.position.x - w.x) / w.width; g += Math.exp(-d * d) * w.amp; }
+      g = Math.min(g, 1.1);   // overlapping waves on 48 translucent slabs otherwise bloom to white
       const hov = hover?.type === 'layer' && hover.i === s.userData.i;
       const dim = rig.visible && !s.userData.sel ? .35 : 1;
       s.material.emissiveIntensity = lerp(s.material.emissiveIntensity, (s.userData.base + g) * dim + (s.userData.sel ? 1.2 : 0) + (hov ? .8 : 0) + (cur === 'stack' ? .1 : 0), Math.min(1, dt * 12));
@@ -638,7 +642,7 @@ export function buildScene(M, hooks = {}) {
     frame.vx = lerp(frame.vx ?? sx, sx, Math.min(1, dt * 5)); frame.vy = lerp(frame.vy ?? sy, sy, Math.min(1, dt * 5));
     const ax = Math.abs(frame.vx), ay = Math.abs(frame.vy);
     if (ax > .5 || ay > .5) camera.setViewOffset(innerWidth + 2 * ax, innerHeight + 2 * ay, frame.vx > 0 ? 0 : 2 * ax, frame.vy < 0 ? 2 * ay : 0, innerWidth, innerHeight); else camera.clearViewOffset();
-    updateParticles(dt);
+    updateParticles(dt); sky?.update();
     composer.render(); labels.render(scene, camera);
     requestAnimationFrame(frame);
   }
@@ -669,8 +673,8 @@ export function buildScene(M, hooks = {}) {
   }
 
   Object.assign(S, {
-    COL, SC, VIEWS, flyTo, viewFor, openLayer, closeLayer, get rigLayer() { return rigLayer; }, beat, clearBeats, setTrace, setAnswer, setKV,
-    ambience, liveTick, decodeStep, has: id => !!ST[id] || ['linear', 'attn', 'ffn', 'memory', 'hw', 'stack'].includes(id),
+    COL, SC, VIEWS, flyTo, viewFor, camera, controls, openLayer, closeLayer, get rigLayer() { return rigLayer; }, beat, clearBeats, setTrace, setAnswer, setKV,
+    ambience, liveTick, decodeStep, sky, has: id => !!ST[id] || ['linear', 'attn', 'ffn', 'memory', 'hw', 'stack'].includes(id),
     resetLive() { setKV(0); ST.scheduler.lit = 0; },
     stats: () => ({ fps: +fps.toFixed(1), calls: renderer.info.render.calls, tris: renderer.info.render.triangles, particles: particles.count, interior, layers: L, stations: Object.keys(ST) }),
   });
