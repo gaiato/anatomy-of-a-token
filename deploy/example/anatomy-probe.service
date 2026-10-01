@@ -1,0 +1,27 @@
+# Example systemd unit. Copy to /etc/systemd/system/, edit the four marked lines, then:
+#   sudo systemctl daemon-reload && sudo systemctl enable --now anatomy-probe.service
+[Unit]
+Description=anatomy-probe - model profile + traced requests for Anatomy of a Token
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# EDIT: an unprivileged user that can read the model checkpoints
+User=llm
+Group=llm
+# EDIT: where you cloned this repo
+WorkingDirectory=/opt/anatomy-of-a-token/probe
+# EDIT: your inference server(s), first that answers wins; the folder that holds your checkpoints
+ExecStart=/usr/bin/python3 -m anatomy_probe serve --engine http://127.0.0.1:8000 --search /srv/models --web /opt/anatomy-of-a-token/web --port 1239
+# EDIT: what the page should call this machine
+Environment=ANATOMY_HARDWARE_NAME=My Workstation
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

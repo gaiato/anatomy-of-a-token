@@ -1,0 +1,382 @@
+{
+ "schema": 1,
+ "generated": "2026-10-01T18:51:56Z",
+ "model": {
+  "family": "qwen3_8_flash_next",
+  "arch": "Qwen3_8FlashNextForConditionalGeneration",
+  "vocab": 248320,
+  "hidden": 2560,
+  "layers": 48,
+  "context": 262144,
+  "tied_embeddings": false,
+  "act": "silu",
+  "norm_eps": 1e-06,
+  "layer_types": [
+   "linear",
+   "linear",
+   "linear",
+   "attention",
+   "linear",
+   "linear",
+   "linear",
+   "attention",
+   "linear",
+   "linear",
+   "linear",
+   "attention",
+   "linear",
+   "linear",
+   "linear",
+   "attention",
+   "linear",
+   "linear",
+   "linear",
+   "attention",
+   "linear",
+   "linear",
+   "linear",
+   "attention",
+   "linear",
+   "linear",
+   "linear",
+   "attention",
+   "linear",
+   "linear",
+   "linear",
+   "attention",
+   "linear",
+   "linear",
+   "linear",
+   "attention",
+   "linear",
+   "linear",
+   "linear",
+   "attention",
+   "linear",
+   "linear",
+   "linear",
+   "attention",
+   "linear",
+   "linear",
+   "linear",
+   "attention"
+  ],
+  "ffn_types": [
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe",
+   "moe"
+  ],
+  "attention": {
+   "kind": "gqa",
+   "heads": 24,
+   "kv_heads": 2,
+   "head_dim": 256,
+   "rope_theta": 10000000,
+   "rope_partial": 0.25,
+   "sliding_window": null,
+   "sparse": {
+    "heads": 4,
+    "head_dim": 128,
+    "budget": 2048,
+    "compress": 4
+   },
+   "output_gate": "sigmoid",
+   "kv_lora_rank": null,
+   "q_lora_rank": null
+  },
+  "linear": {
+   "kind": "gated_deltanet",
+   "key_heads": 16,
+   "value_heads": 48,
+   "key_dim": 128,
+   "value_dim": 128,
+   "conv": 4
+  },
+  "ffn": {
+   "dense_dim": 12288,
+   "moe": {
+    "experts": 512,
+    "top_k": 10,
+    "shared": 1,
+    "expert_dim": 640,
+    "shared_dim": 640
+   }
+  },
+  "extras": {
+   "ple": {
+    "layers": [
+     1
+    ],
+    "ngram": 3,
+    "heads": 8,
+    "dim": 2560,
+    "dtype": "nvfp4"
+   },
+   "hyper": {
+    "streams": 4,
+    "lowrank": 320
+   },
+   "mtp": {
+    "layers": 1
+   }
+  },
+  "vision": {
+   "depth": 27,
+   "hidden": 1152,
+   "patch": 16,
+   "merge": 2,
+   "out": 2560
+  },
+  "weights": {
+   "parts": {
+    "ple": {
+     "params": 51233085475,
+     "bytes": 28865817884,
+     "dtypes": {
+      "I64": 280,
+      "F32": 4,
+      "F8_E4M3": 3200015360,
+      "U8": 25600122880,
+      "BF16": 65679360
+     }
+    },
+    "experts": {
+     "params": 120795955200,
+     "bytes": 67948314624,
+     "dtypes": {
+      "F32": 589824,
+      "F8_E4M3": 7549747200,
+      "U8": 60397977600
+     }
+    },
+    "vision": {
+     "params": 448931056,
+     "bytes": 404887436,
+     "dtypes": {
+      "F32": 108,
+      "BF16": 9660896,
+      "F8_E4M3": 318595968,
+      "U8": 76630464
+     }
+    },
+    "hyper": {
+     "params": 640624640,
+     "bytes": 1281249280,
+     "dtypes": {
+      "BF16": 1281249280
+     }
+    },
+    "linear_attn": {
+     "params": 2086510464,
+     "bytes": 2153150208,
+     "dtypes": {
+      "BF16": 2965248,
+      "F8_E4M3": 2085027840,
+      "U8": 65157120
+     }
+    },
+    "router": {
+     "params": 62914560,
+     "bytes": 125829120,
+     "dtypes": {
+      "BF16": 125829120
+     }
+    },
+    "shared_expert": {
+     "params": 236052480,
+     "bytes": 243548160,
+     "dtypes": {
+      "BF16": 245760,
+      "F8_E4M3": 235929600,
+      "U8": 7372800
+     }
+    },
+    "attention": {
+     "params": 617358336,
+     "bytes": 636659712,
+     "dtypes": {
+      "BF16": 18432,
+      "F8_E4M3": 617349120,
+      "U8": 19292160
+     }
+    },
+    "head": {
+     "params": 635699200,
+     "bytes": 1271398400,
+     "dtypes": {
+      "BF16": 1271398400
+     }
+    },
+    "embed": {
+     "params": 635699200,
+     "bytes": 1271398400,
+     "dtypes": {
+      "BF16": 1271398400
+     }
+    },
+    "mtp": {
+     "params": 2607150848,
+     "bytes": 1596720640,
+     "dtypes": {
+      "F32": 6144,
+      "BF16": 181136896,
+      "F8_E4M3": 157286400,
+      "U8": 1258291200
+     }
+    }
+   },
+   "total_bytes": 105798973864,
+   "total_params": 179999981459,
+   "dtypes": {
+    "I64": 280,
+    "F32": 596080,
+    "BF16": 4209581792,
+    "F8_E4M3": 14163951488,
+    "U8": 87424844224
+   },
+   "shards": 35,
+   "tensors": 301730,
+   "layer_indices": 48,
+   "source": "safetensors"
+  },
+  "quant": {
+   "method": "modelopt",
+   "by_part": {
+    "linear_attn": "MXFP8",
+    "attention": "MXFP8",
+    "shared_expert": "MXFP8",
+    "vision": "MXFP8",
+    "experts": "NVFP4",
+    "mtp": "NVFP4",
+    "ple": "4-bit packed",
+    "hyper": "BF16",
+    "router": "BF16",
+    "head": "BF16",
+    "embed": "BF16"
+   }
+  },
+  "estimates": {
+   "kv_bytes_per_token": 12288,
+   "linear_state_bytes_per_seq": 56623104,
+   "active_params_per_token": 6638455680,
+   "params_text": 179551050403
+  },
+  "id": "Qwen3.8-Flash-Next-NVFP4",
+  "repo": "Mia-AiLab/Qwen3.8-Flash-Next-NVFP4",
+  "path_kind": "safetensors",
+  "name": "Qwen3.8-Flash-Next-NVFP4"
+ },
+ "runtime": {
+  "engine": "vllm",
+  "version": "0.1.dev20073+g8e685d198",
+  "served_name": "Qwen3.8-Flash-Next-NVFP4",
+  "repo": "Mia-AiLab/Qwen3.8-Flash-Next-NVFP4",
+  "max_model_len": 262144,
+  "launch": {
+   "engine": "vllm",
+   "tp": 1,
+   "gmu": 0.769,
+   "max_seqs": 4,
+   "batch_tokens": 2048,
+   "max_len": 262144,
+   "kv_dtype": "fp8",
+   "state_dtype": "bfloat16",
+   "chunked_prefill": true,
+   "reasoning_parser": "qwen3",
+   "tool_parser": "qwen3_coder",
+   "spec": {
+    "method": "mtp",
+    "num_speculative_tokens": 3
+   }
+  },
+  "kv": {
+   "dtype": "fp8",
+   "block_size": 8.0,
+   "tokens": 947526.0,
+   "gpu_blocks": 647.0,
+   "gmu": 0.769,
+   "prefix_caching": true,
+   "max_concurrency": 3.6145251396648046,
+   "state_dtype": "bfloat16"
+  },
+  "spec": {
+   "method": "mtp",
+   "k": 3
+  }
+ },
+ "hardware": {
+  "name": "ASUS Ascent GX10",
+  "cpu": {
+   "models": [
+    "Cortex-X925",
+    "Cortex-A725"
+   ],
+   "cores": 20,
+   "arch": "aarch64"
+  },
+  "gpus": [
+   {
+    "name": "NVIDIA GB10",
+    "mem_total_bytes": null,
+    "power_limit_w": null,
+    "unified": true
+   }
+  ],
+  "mem_total_bytes": 130596118528,
+  "unified": true
+ },
+ "sources": {
+  "layer_types": "config",
+  "model": "config",
+  "weights": "weights",
+  "kv": "engine",
+  "spec": "engine",
+  "estimates": "calc"
+ },
+ "pack_hint": null
+}

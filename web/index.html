@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark light">
+<title>Anatomy of a Token</title>
+<meta name="description" content="A step-by-step, explorable 3D walkthrough of how the language model on this server turns your question into an answer.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239b7cf0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='8' width='18' height='9' rx='2'/%3E%3Cpath d='M7 12.5h.01M11 12.5h6'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>try{var t=new URLSearchParams(location.search).get('theme')||localStorage.getItem('lab-theme');if(t&&t!=='obsidian')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<link rel="stylesheet" href="css/theme.css">
+<link rel="stylesheet" href="css/anatomy.css">
+<script src="config.js"></script>
+<script type="importmap">{ "imports": { "three": "./vendor/build/three.module.js", "three/addons/": "./vendor/examples/jsm/" } }</script>
+</head>
+<body>
+<canvas id="gl" aria-hidden="true"></canvas>
+<div id="labels" aria-hidden="true"></div>
+
+<header class="topbar ana-top">
+  <a class="brand" href="./" title="Anatomy of a Token">
+    <span class="brand-mark" data-ic="chip"></span>
+    <span><h1>Anatomy of a Token</h1><span class="sub"><span class="dot idle" id="live-dot"></span><span id="model-line">Reading the model…</span></span></span>
+  </a>
+  <nav class="right modes" aria-label="Modes">
+    <button class="btn" id="b-walk" title="Play the walkthrough (W)"><span data-ic="play"></span><span class="lbl">Walkthrough</span></button>
+    <button class="btn" id="b-ask" title="Ask your own question (A)"><span data-ic="ask"></span><span class="lbl">Ask</span></button>
+    <button class="btn" id="b-live" title="Animate from the live server (L)" aria-pressed="false"><span data-ic="pulse"></span><span class="lbl">Live</span></button>
+    <button class="btn" id="b-overview" title="Overview (O)"><span data-ic="eye"></span><span class="lbl">Overview</span></button>
+    <a class="btn" id="b-back" href="#" hidden><span data-ic="back"></span><span class="lbl"></span></a>
+  </nav>
+</header>
+<div class="banner" id="banner" hidden></div>
+
+<nav class="journey" id="journey" aria-label="Steps of the request"></nav>
+
+<aside class="panel wt" id="panel" aria-live="polite" aria-label="Walkthrough step" hidden>
+  <button class="panel-x" id="panel-x" aria-label="Close (Esc)">×</button>
+  <div id="panel-body"></div>
+  <div class="wt-ctl">
+    <button class="btn sm" id="wt-prev" aria-label="Previous step (←)">‹ Back</button>
+    <button class="btn sm" id="wt-play" aria-label="Play the walkthrough">▶</button>
+    <button class="btn sm" id="wt-next" aria-label="Next step (→)">Next ›</button>
+    <span class="sp"></span>
+    <button class="btn sm" id="wt-replay" title="Replay this step’s animation">↻</button>
+    <button class="btn sm" id="wt-speed" title="Playback speed">1×</button>
+  </div>
+</aside>
+
+<section class="hud" id="hud" hidden aria-label="Live telemetry">
+  <div class="hud-h"><span class="dot" id="hud-dot"></span><b id="hud-state">Live</b><span class="hud-model mono" id="hud-model"></span></div>
+  <div class="hud-grid">
+    <div><span class="k">Output</span><span class="v mono" id="h-gen">–</span><span class="u">tok/s</span></div>
+    <div><span class="k">Prompt</span><span class="v mono" id="h-pre">–</span><span class="u">tok/s</span></div>
+    <div><span class="k">Step</span><span class="v mono" id="h-step">–</span><span class="u">ms</span></div>
+    <div><span class="k">Per step</span><span class="v mono" id="h-tps">–</span><span class="u">tokens</span></div>
+    <div><span class="k">Requests</span><span class="v mono" id="h-run">–</span><span class="u" id="h-wait"></span></div>
+    <div><span class="k">KV cache</span><span class="v mono" id="h-kv">–</span><span class="u">%</span></div>
+    <div><span class="k">GPU</span><span class="v mono" id="h-pow">–</span><span class="u">W</span></div>
+    <div><span class="k">Temp</span><span class="v mono" id="h-temp">–</span><span class="u">°C</span></div>
+  </div>
+  <div class="hud-acc" id="hud-acc" aria-label="Drafts accepted by position">
+    <span class="k">Draft accepted</span>
+    <div class="acc" id="acc"></div>
+    <span class="mono u" id="h-acc">–</span>
+  </div>
+  <p class="hud-note">Aggregate counters only: no prompts or replies are read.</p>
+</section>
+
+<div class="toast" id="toast" role="status" hidden></div>
+<div class="hint" id="hint">Drag to orbit · scroll to zoom · click anything glowing · <kbd>←</kbd><kbd>→</kbd> steps · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> depth · <kbd>Space</kbd> play · <kbd>L</kbd> live</div>
+<div class="loading" id="loading"><div class="spin"></div><span>Reading the model…</span></div>
+<noscript><p class="noscript">This page needs JavaScript and WebGL.</p></noscript>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
