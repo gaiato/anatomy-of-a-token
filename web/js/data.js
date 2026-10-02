@@ -25,11 +25,15 @@ export async function loadProfile() {
     try {
       const p = await getJSON(CFG.api + 'profile', {}, 15000);   // first call after a model switch scans tensor headers
       if (!p.error && p.model) return { profile: p, demo: false };
-      var reason = p.error;
-    } catch (e) { reason = e.message; }
+      var why = p.error;
+    } catch (e) { why = e; }
+    if (why) console.info('anatomy: no live profile:', why.message || why);
+    var reason = typeof why === 'string' ? 'The probe could not read the served model'
+      : why?.status === 502 ? 'The probe is running but no model server answered'
+      : why?.status && why.status !== 404 ? `The probe answered HTTP ${why.status}` : 'No probe answered';
   }
   const p = await getJSON(CFG.snapshot + 'profile.json');
-  return { profile: p, demo: true, reason: force ? 'demo requested' : reason };
+  return { profile: p, demo: true, reason: force ? 'Demo mode was asked for' : reason };
 }
 
 export async function loadSnapshotTraces() {

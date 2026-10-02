@@ -1,7 +1,7 @@
 /* Anatomy of a Token: page controller. Loads the served model's profile, builds the scene from it,
  * and runs the walkthrough: one panel that explains the current step at the depth you choose, while the
  * 3D map stays live (orbit, click anything, step through tokens). */
-import { $, esc, clamp, int, count, bytes, pct, ms, showTok, tag, REDUCED } from './util.js';
+import { $, esc, clamp, int, count, bytes, pct, ms, showTok, tag, REDUCED, panelWidth } from './util.js';
 import { viewModel, traceModel } from './model.js';
 import { buildScene } from './scene.js';
 import { steps as buildSteps, stationTitles, PHASES, STATION_STEP, MIXNAME } from './story.js';
@@ -29,7 +29,7 @@ document.title = `Anatomy of a Token · ${M.name}`;
 $('model-line').textContent = `${M.name} · ${M.engine.label} on ${M.hw.title}`;
 $('live-dot').className = demo ? 'dot idle' : 'dot warn';
 if (config.backLink) { const a = $('b-back'); a.href = config.backLink.href; a.querySelector('.lbl').textContent = config.backLink.label; a.hidden = false; }
-if (demo) { const b = $('banner'); b.innerHTML = `<b>Demo data.</b> No probe answered${reason ? ` (${esc(reason)})` : ''}, so this page shows ${esc(M.name)} as captured on ${esc((profile.generated || '').slice(0, 10))}. <a href="#" id="howto">Run the probe</a> to see your own model. <button class="banner-x" aria-label="Dismiss">×</button>`; b.hidden = false; $('howto').href = config.repo || '#'; }
+if (demo) { const b = $('banner'); b.innerHTML = `<b>Demo data.</b> ${esc(reason || 'No probe answered')}, so this page shows ${esc(M.name)} as captured on ${esc((profile.generated || '').slice(0, 10))}. <a href="#" id="howto">Run the probe</a> to see your own model. <button class="banner-x" aria-label="Dismiss">×</button>`; b.hidden = false; $('howto').href = config.repo || '#'; }
 $('banner').addEventListener('click', e => { if (e.target.closest('.banner-x')) $('banner').hidden = true; });
 
 /* ── Scene ── */
@@ -63,6 +63,7 @@ function go(i, o = {}) {
     else if (s.station !== 'ffn') W.layer = -1;
   }
   if (W.layer >= 0) S.openLayer(W.layer); else if (!['linear', 'attn', 'ffn'].includes(s.station) && s.beat !== 'decode') S.closeLayer();
+  document.body.classList.add('panel-open'); S.panelW = panelWidth();   // before flying: the camera frames for the open panel
   S.beat(s.beat);
   if (s.beat !== 'intro' || o.dur === 0) S.flyTo(S.viewFor(s.station === 'hw' ? 'hw' : s.station), o.dur ?? 1.8);
   S.focus = s.station; S.show = { tokens: s.id === 'tokenize', probs: s.widget === 'probs', drafts: s.id === 'spec' || s.id === 'decode' };
@@ -89,14 +90,14 @@ function renderPanel() {
     <h2 class="p-title">${esc(s.title)}</h2><div class="p-kick">${esc(s.kicker || '')}</div>${layerSub}
     <div class="tiers" role="radiogroup" aria-label="Depth">${TIERS.map((t, j) => `<button role="radio" aria-checked="${tier === j + 1}" data-tier="${j + 1}" title="${esc(t)} (${j + 1})"><i>${j + 1}</i>${esc(t)}</button>`).join('')}</div>
     <p class="lead">${esc(s.t1)}</p>
-    ${tier >= 2 && s.t2.length ? `<section class="tier2"><h4>Technical</h4>${s.t2.map(para).join('')}</section>` : ''}
-    ${tier >= 3 && s.t3.length ? `<section class="tier3"><h4>Under the hood</h4>${s.t3.map(para).join('')}</section>` : ''}
+    ${tier >= 2 && s.t2.length ? `<section class="tier2"><h3>Technical</h3>${s.t2.map(para).join('')}</section>` : ''}
+    ${tier >= 3 && s.t3.length ? `<section class="tier3"><h3>Under the hood</h3>${s.t3.map(para).join('')}</section>` : ''}
     ${tier < 3 && (tier === 1 ? s.t2.length : s.t3.length) ? `<button class="deeper" data-tier="${tier + 1}">${tier === 1 ? 'Go deeper: the technical version' : 'Go deeper: under the hood'} ↓</button>` : ''}
     <div id="w-widget">${widget(s)}</div>
     <div id="p-live">${liveBox(s)}</div>
-    ${tier >= 2 && s.facts?.length ? `<h4>The numbers</h4><dl class="facts">${s.facts.map(([k, v, src]) => `<dt>${esc(k)}</dt><dd>${esc(v)}${tag(src)}</dd>`).join('')}</dl>` : ''}
+    ${tier >= 2 && s.facts?.length ? `<h3>The numbers</h3><dl class="facts">${s.facts.map(([k, v, src]) => `<dt>${esc(k)}</dt><dd>${esc(v)}${tag(src)}</dd>`).join('')}</dl>` : ''}
     ${s.id === 'hw' && M.pack?.credit && tier >= 3 ? `<p class="credit">${esc(M.pack.credit)}</p>` : ''}`;
-  p.hidden = false; document.body.classList.add('panel-open'); S.panelW = innerWidth > 900 ? 456 : 1;
+  p.hidden = false; document.body.classList.add('panel-open'); S.panelW = panelWidth();
   $('wt-prev').disabled = W.i === 0; $('wt-next').disabled = W.i === n - 1;
   syncPlay();
   if (s.widget === 'prompt') wirePrompt();
@@ -135,11 +136,11 @@ function widget(s) {
     </form>`;
   }
   if (!T && s.needsTrace) return `<p class="muted">Run a question in step ${W.steps.findIndex(x => x.id === 'prompt') + 1} to see real data here.</p>`;
-  if (w === 'tokens') return `<h4>Your prompt, exactly as the model sees it</h4><div class="chips">${T.tokens.map(t => `<span class="chip ${chipCls(t)}" title="token ${t.id}">${esc(showTok(t.text))}<i>${t.id}</i></span>`).join('')}</div>
+  if (w === 'tokens') return `<h3>Your prompt, exactly as the model sees it</h3><div class="chips">${T.tokens.map(t => `<span class="chip ${chipCls(t)}" title="token ${t.id}">${esc(showTok(t.text))}<i>${t.id}</i></span>`).join('')}</div>
     <div class="legend"><span><i class="lg special"></i>template / special</span><span><i class="lg word"></i>word piece</span><span><i class="lg other"></i>space, newline, punctuation</span></div>`;
   if (w === 'probs') {
     const i = clamp(W.probsIdx, 0, T.out.length - 1), x = T.out[i];
-    return `<h4>The model’s real top five, token by token</h4>
+    return `<h3>The model’s real top five, token by token</h3>
       <div class="stepper"><button class="btn sm" data-ans="-1" aria-label="Previous token">‹</button><span>token ${i + 1} / ${T.out.length}</span><span class="so">${esc(showTok(x.text))}</span><button class="btn sm" data-ans="1" aria-label="Next token">›</button></div>
       <div class="bars">${(x.top || []).map(([t, p]) => `<div class="bar ${t === x.text ? 'win' : ''}"><span class="t">${esc(showTok(t))}</span><span class="track"><span class="fill" style="width:${Math.max(.5, (p || 0) * 100)}%"></span></span><span class="p">${pct(p)}</span></div>`).join('')}</div>
       <p class="ctx mono">${esc(T.out.slice(Math.max(0, i - 8), i).map(o => o.text).join('')).replace(/\n/g, '⏎')}<b>${esc(x.text).replace(/\n/g, '⏎')}</b></p>`;
@@ -147,7 +148,7 @@ function widget(s) {
   if (w === 'layers') {
     const cols = M.L <= 16 ? M.L : M.L % 16 === 0 ? 16 : M.L % 12 === 0 ? 12 : 16;
     const present = [...new Set(M.types)];
-    return `<h4>All ${M.L} layers · click one to open it</h4><div class="layermap" style="grid-template-columns:repeat(${cols},minmax(0,26px))">${M.types.map((t, i) =>
+    return `<h3>All ${M.L} layers · click one to open it</h3><div class="layermap" style="grid-template-columns:repeat(${cols},minmax(0,26px))">${M.types.map((t, i) =>
       `<button class="${t}${M.pleLayers.includes(i) ? ' ple' : ''}${M.marks.some(m => m.layers.includes(i)) ? ' ab' : ''}${i === W.layer ? ' cur' : ''}" data-layer="${i}" aria-label="Layer ${i + 1}, ${esc(MIXNAME(M)[t])}">${i + 1}</button>`).join('')}</div>
       <div class="legend">${present.map(t => `<span><i class="lg ${t}"></i>${esc(MIXNAME(M)[t])}</span>`).join('')}${M.pleLayers.length ? '<span><i class="lg pleb"></i>PLE input</span>' : ''}${M.marks.map(m => `<span><i class="lg dotw"></i>${esc(m.label)}</span>`).join('')}</div>`;
   }
@@ -156,12 +157,12 @@ function widget(s) {
       <div class="memrows">${M.memory.regions.map(r => `<div><i style="background:${r.color}"></i><span>${esc(r.label)} ${tag(r.src)}</span><span class="g">${bytes(r.bytes)}</span><small>${esc(r.note)}</small></div>`).join('')}</div>`; }
   if (w === 'steps') {
     const k = M.spec?.k || 0, rows = T.steps.slice(0, 40);
-    return `<h4>Every engine step of your reply${k ? ` · drafts accepted per step (of ${k})` : ''}</h4>
+    return `<h3>Every engine step of your reply${k ? ` · drafts accepted per step (of ${k})` : ''}</h3>
       ${k ? `<div class="accrow">${T.acc.map((p, j) => `<div><span>draft ${j + 1}</span><span class="track"><span class="fill" style="width:${(p || 0) * 100}%"></span></span><span class="p">${pct(p, 0)}</span></div>`).join('')}</div>` : ''}
       <ol class="steps">${rows.map((st, si) => `<li data-step="${si}" class="${si === 0 ? 'pre' : ''}"><span class="t mono">${ms(st.t_ms)}</span><span class="toks">${st.tokens.map((x, j) => `<span class="tk ${si === 0 ? 'first' : j < st.n - 1 ? 'acc' : 'own'}">${esc(showTok(x.text))}</span>`).join('')}</span>${k && si ? `<span class="n mono">${st.n - 1}/${k}</span>` : ''}</li>`).join('')}</ol>
       <div class="legend">${k ? '<span><i class="lg acc"></i>accepted draft</span><span><i class="lg own"></i>the model’s own token</span>' : ''}<span><i class="lg first"></i>first token (after prefill)</span></div>`;
   }
-  if (w === 'reply') return `<h4>The reply, chunk by chunk</h4><div class="reply">${T.steps.map((st, si) => `<span class="ck c${si % 2}" title="step ${si + 1} · ${ms(st.t_ms)}">${esc(st.tokens.map(x => x.text).join(''))}</span>`).join('')}</div>`;
+  if (w === 'reply') return `<h3>The reply, chunk by chunk</h3><div class="reply">${T.steps.map((st, si) => `<span class="ck c${si % 2}" title="step ${si + 1} · ${ms(st.t_ms)}">${esc(st.tokens.map(x => x.text).join(''))}</span>`).join('')}</div>`;
   if (w === 'summary') return `<div class="sumgrid">
       <div><b class="mono">${T.n}</b><span>prompt tokens</span></div><div><b class="mono">${T.nOut}</b><span>reply tokens</span></div>
       <div><b class="mono">${T.steps.length}</b><span>engine steps</span></div><div><b class="mono">${ms(T.ttft)}</b><span>first token</span></div>
@@ -263,7 +264,7 @@ if (!demo) setInterval(async () => {
 
 /* ── Keyboard and buttons ── */
 addEventListener('keydown', e => {
-  if (e.target.closest?.('input,textarea,select')) return;
+  if (e.target.closest?.('input,textarea,select') || e.ctrlKey || e.metaKey || e.altKey) return;   // leave browser shortcuts (Ctrl+L, Cmd+1…) alone
   const k = e.key;
   if (k === ' ' && e.target.closest?.('button,a')) return;   // Space already presses a focused button
   if (k === 'Escape') { if (W.layer >= 0 && W.open) { W.layer = -1; S.closeLayer(); renderPanel(); } else overview(); }

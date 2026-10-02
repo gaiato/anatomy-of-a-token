@@ -10,7 +10,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { $, esc, clamp, lerp, ease, REDUCED, showTok, int, count } from './util.js';
+import { $, esc, clamp, lerp, ease, REDUCED, showTok, int, count, sidePanel } from './util.js';
 import { buildSky } from './sky.js';
 
 const rnd = (() => { let s = 1234567; return () => ((s = (s * 16807) % 2147483647) / 2147483647); })();   // seeded: same scene every load
@@ -43,10 +43,19 @@ export function buildScene(M, hooks = {}) {
   scene.background = new THREE.Color(COL.bg);
   scene.fog = new THREE.FogExp2(COL.bg, 0.018);
   const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.05, 400);
+  // The views are framed for landscape. On a portrait screen, pull back until about 50° fit across, less while a panel
+  // covers the lower screen (the scene then shows in a landscape strip above it). viewK is the pull-back of the current view:
+  // the shell's fade and the interior test divide it out, so a pulled-back view shows what the framed one would.
+  let reach = 1, viewK = 1;
+  function fitLens() {
+    const a = innerWidth / innerHeight; camera.aspect = a; camera.updateProjectionMatrix();
+    reach = Math.max(1, Math.tan(25 * Math.PI / 180) / (Math.tan(camera.fov * Math.PI / 360) * a));
+  }
+  fitLens();
   camera.position.set(7, 6, 30);
   const controls = new OrbitControls(camera, canvas);
   controls.enableDamping = true; controls.dampingFactor = 0.07;
-  controls.minDistance = 1.2; controls.maxDistance = 60; controls.maxPolarAngle = Math.PI * 0.495;
+  controls.minDistance = 1.2; controls.maxDistance = 60 * reach; controls.maxPolarAngle = Math.PI * 0.495;
   controls.target.set(0, 2.2, 0);
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
@@ -183,7 +192,7 @@ export function buildScene(M, hooks = {}) {
       const a = (n > 1 ? i / (n - 1) - .5 : 0) * 2.4;
       m.position.set(Math.sin(a) * .72, .55 + Math.cos(a * 2) * .04, -Math.cos(a) * .25 + .2); m.rotation.y = -a * .6;
       tz.chipGroup.add(m); tz.chips.push(m);
-      const l = label(esc(showTok(t.text)), 'lbl3d tok hide'); l.position.set(0, .14, 0); m.add(l); m.userData.label = l;
+      const l = label(esc(showTok(t.text)), 'lbl3d tok tz hide'); l.position.set(0, .14, 0); m.add(l); m.userData.label = l;
     });
   }
 
@@ -472,6 +481,8 @@ export function buildScene(M, hooks = {}) {
   }
   let flight = null;
   function flyTo(v, dur = 1.7) {
+    viewK = document.body.classList.contains('panel-open') ? 1 + (reach - 1) * .4 : reach;
+    if (viewK > 1) v = { target: v.target, pos: v.pos.clone().sub(v.target).multiplyScalar(viewK).add(v.target) };
     if (REDUCED || dur <= 0) { camera.position.copy(v.pos); controls.target.copy(v.target); flight = null; return; }
     const p0 = camera.position.clone(), t0 = controls.target.clone();
     flight = { e: 0, dur, p0, t0, p1: v.pos.clone(), t1: v.target.clone(), lift: Math.min(3, p0.distanceTo(v.pos) * .12) };
@@ -576,7 +587,7 @@ export function buildScene(M, hooks = {}) {
     for (const a of [...anims]) if (!a.update(dt)) anims.delete(a);
     hooks.onFrame?.(dt);
 
-    const cp = camera.position; interior = Math.abs(cp.x) < 7.9 && Math.abs(cp.z) < 7.9 && cp.y < 5.5;
+    const cp = viewK > 1 ? camera.position.clone().sub(controls.target).divideScalar(viewK).add(controls.target) : camera.position; interior = Math.abs(cp.x) < 7.9 && Math.abs(cp.z) < 7.9 && cp.y < 5.5;
     const dist = cp.distanceTo(V(0, 2.6, 0)), nearBox = Math.abs(cp.x) < 10 && Math.abs(cp.z) < 10 && cp.y < 7.5;
     const target = interior || nearBox ? 0 : clamp((dist - 23) / 5, .06, .94);
     shellMat.uniforms.uOpacity.value = lerp(shellMat.uniforms.uOpacity.value, target, Math.min(1, dt * 4));
@@ -637,8 +648,8 @@ export function buildScene(M, hooks = {}) {
           A.ctx.setColorAt(i, tmpC.set(COL.attention).multiplyScalar((A.sel.has(i) && passed) || (inWin && passed) ? 1.4 : .16 + (Math.abs(bx - x) < .06 ? .5 : 0))); }
         A.ctx.instanceColor.needsUpdate = true; }
     }
-    const wide = innerWidth > 900 && !document.body.classList.contains('shot');
-    const sx = wide ? (280 - S.panelW) / 2 : 0, sy = !wide && S.panelW ? -innerHeight * .26 : 0;
+    const shot = document.body.classList.contains('shot'), side = sidePanel() && !shot;
+    const sx = side ? ((innerWidth > 900 ? 280 : 0) - S.panelW) / 2 : 0, sy = !side && !shot && S.panelW ? -innerHeight * .26 : 0;
     frame.vx = lerp(frame.vx ?? sx, sx, Math.min(1, dt * 5)); frame.vy = lerp(frame.vy ?? sy, sy, Math.min(1, dt * 5));
     const ax = Math.abs(frame.vx), ay = Math.abs(frame.vy);
     if (ax > .5 || ay > .5) camera.setViewOffset(innerWidth + 2 * ax, innerHeight + 2 * ay, frame.vx > 0 ? 0 : 2 * ax, frame.vy < 0 ? 2 * ay : 0, innerWidth, innerHeight); else camera.clearViewOffset();
@@ -646,7 +657,7 @@ export function buildScene(M, hooks = {}) {
     composer.render(); labels.render(scene, camera);
     requestAnimationFrame(frame);
   }
-  addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight); labels.setSize(innerWidth, innerHeight); });
+  addEventListener('resize', () => { fitLens(); controls.maxDistance = 60 * reach; renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight); labels.setSize(innerWidth, innerHeight); });
   requestAnimationFrame(t => { last = t; frame(t); });
 
   /* ── Ambient motion and live mode ── */

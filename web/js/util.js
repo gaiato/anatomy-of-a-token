@@ -5,6 +5,9 @@ export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export const lerp = (a, b, t) => a + (b - a) * t;
 export const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 export const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+/** The step panel sits beside the scene (desktop, or a phone held sideways) rather than under it. Matches the landscape rule in anatomy.css. */
+export const sidePanel = () => innerWidth > 900 || (innerWidth > innerHeight && innerHeight <= 520);
+export const panelWidth = () => innerWidth > 900 ? 456 : sidePanel() ? Math.min(400, innerWidth * .5) + 8 : 1;
 
 export const GiB = 1073741824;
 export const int = n => n == null ? '–' : Math.round(n).toLocaleString('en-US');

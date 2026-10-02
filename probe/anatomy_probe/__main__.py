@@ -16,7 +16,7 @@ DEFAULT_PROMPTS = ["Why does ice float on water?"]
 
 def _common(p):
     p.add_argument("--engine", action="append", help="OpenAI-compatible server (vLLM or llama.cpp); repeat for fallbacks, tried in order (default http://127.0.0.1:8000)")
-    p.add_argument("--api-key", default=os.environ.get("ANATOMY_API_KEY"))
+    p.add_argument("--api-key", default=os.environ.get("ANATOMY_API_KEY"), help="key for the engine; prefer the ANATOMY_API_KEY environment variable, which stays out of ps")
     p.add_argument("--search", action="append", default=[], help="directory that holds model folders (repeatable)")
     p.add_argument("--model-map", action="append", default=[], metavar="NAME=PATH", help="served name or repo id -> checkpoint path")
     p.add_argument("--hardware-name", default=os.environ.get("ANATOMY_HARDWARE_NAME"), help="what to call this machine, e.g. 'ASUS Ascent GX10'")

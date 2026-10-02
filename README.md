@@ -40,6 +40,7 @@ python3 -m anatomy_probe serve --engine http://127.0.0.1:8000 --web ../web
 - `--engine` can repeat: the first server that answers is the one described (e.g. vLLM, then a llama.cpp fallback).
 - The probe finds the checkpoint from what the server reports: an absolute path, the Hugging Face cache by repo id, or `--search DIR` / `--model-map NAME=PATH`.
 - `--hardware-name "My Workstation"` names the machine on the page.
+- If the server needs an API key, set `ANATOMY_API_KEY` rather than passing `--api-key`, so the key stays out of the process list. The probe uses it only to call the server; it never reaches the page.
 
 No server handy? Open `web/` with any static file server and add `?demo`: the page runs on the saved snapshot in `web/data/snapshot/` (a real capture from Qwen3.8-Flash-Next on an ASUS Ascent GX10).
 
@@ -47,7 +48,7 @@ Make your own snapshot to share: `python3 -m anatomy_probe snapshot --engine URL
 
 ## Privacy
 
-The probe stores nothing. A visitor’s question exists only for the length of the request: it is tokenized, answered (capped at 48 tokens), and the result returned to that browser. Prompts are never logged. The page asks visitors not to type personal information. Live mode reads only aggregate counters (tokens per second, cache use), never anyone’s prompts or replies. Launch flags pass an allowlist, so API keys and paths never leave the machine. The background (below) asks CelesTrak for the space station's latest orbital elements, at most once every six hours per browser; set `sky: { orbit: null }` in `web/config.js` to use the bundled elements and make no outside request, or `sky: null` for a plain background.
+The probe stores nothing. A visitor’s question exists only for the length of the request: it is tokenized, answered (capped at 48 tokens), and the result returned to that browser. Prompts are never logged. The page asks visitors not to type personal information. Live mode reads only aggregate counters (tokens per second, cache use), never anyone’s prompts or replies. Launch flags pass an allowlist, so API keys and paths never leave the machine. The page loads everything (scripts, fonts, images) from its own folder. Its only outside request is the background (below) asking CelesTrak for the space station's latest orbital elements, at most once every six hours per browser; set `sky: { orbit: null }` in `web/config.js` to use the bundled elements and make no outside request at all, or `sky: null` for a plain background.
 
 ## How it fits together
 
@@ -95,7 +96,7 @@ If your audience is students, read **Privacy** above and consider leaving the pa
 
 ## License
 
-MIT, see `LICENSE`. three.js under `web/vendor/` keeps its own MIT license. The sky data under `web/data/sky/` is public-domain or NASA imagery used with credit; see `web/data/sky/SOURCES.md`.
+MIT, see `LICENSE`. three.js under `web/vendor/` keeps its own MIT license. The fonts in `web/fonts/` (Inter, JetBrains Mono) are under the SIL Open Font License 1.1. The sky data under `web/data/sky/` is public-domain or NASA imagery used with credit; see `web/data/sky/SOURCES.md`.
 
 ## Credits
 
