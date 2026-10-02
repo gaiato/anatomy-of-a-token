@@ -4,6 +4,7 @@ const CFG = Object.assign({ api: 'api/', snapshot: 'data/snapshot/', maxTokens: 
 { const q = new URLSearchParams(location.search), at = Date.parse(q.get('skyat') || ''), warp = +q.get('skywarp');
   if (/^(0|off|false)$/.test(q.get('sky') || '')) CFG.sky = null;                     // ?sky=0: the plain dark background
   else if (CFG.sky) CFG.sky = { ...CFG.sky, ...(isFinite(at) ? { at } : {}), ...(warp > 0 ? { warp } : {}) }; }   // ?skyat=ISO time, ?skywarp=60: preview another moment, faster
+if (CFG.sky && new URLSearchParams(location.search).has('record')) CFG.sky = { ...CFG.sky, orbit: null };   // recordings use the bundled orbit: same sky every render, no network
 { const s = new URLSearchParams(location.search).get('snapshot'); if (s && /^[\w-]+$/.test(s)) CFG.snapshot = `data/${s}/`; }   // ?snapshot=<folder under data/>: another saved model
 export const config = CFG;
 

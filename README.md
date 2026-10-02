@@ -2,7 +2,7 @@
 
 **A step-by-step, explorable 3D walkthrough of what happens inside a language-model server when it answers a question: your question, on your model, on your hardware.**
 
-![The walkthrough on the attention step: a 3D map of the model's layers beside the step's explanation](web/preview.png)
+![The model server as an explorable 3D map, floating over the Earth in the view from the ISS](docs/social-preview.png)
 
 Type a question. The page runs it on the model your server is serving, then walks you through every stage: the tokens your text became, the vectors they turned into, every layer of the real architecture, the experts that fired, the probabilities of each word, the speculative drafts that were accepted or rejected, and every engine step of the reply as it streamed back. Each step has three depths:
 

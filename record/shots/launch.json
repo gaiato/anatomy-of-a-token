@@ -6,11 +6,14 @@
   "fps": 60,
   "duration": 56,
   "capWidth": 700,
+  "query": "skyat=2026-10-01T03:00:30Z&skywarp=11",
+  "sky": "Bundled ISS elements (epoch 2026-10-01 02:39 UTC); 11x time: sunlit ocean at the title, the sunset limb at the end card.",
   "timeline": [
-    { "at": 0, "question": "Why does ice float on water?", "tier": 1, "hide": [".journey"] },
-    { "at": 0, "view": "exterior", "dur": 0 },
+    { "at": 0, "question": "Why does ice float on water?", "tier": 1, "hide": [".journey", ".topbar"] },
+    { "at": 4.6, "show": [".topbar"] },
+    { "at": 0, "view": "exterior", "back": 2.1, "dur": 0 },
     { "at": 0, "orbit": { "deg": 26, "dur": 5 } },
-    { "at": 0.3, "card": { "title": "Anatomy of a Token", "sub": "What actually happens inside an AI server when it answers your question", "dur": 4.4, "scrim": 0.5 } },
+    { "at": 0.3, "card": { "title": "Anatomy of a Token", "sub": "What actually happens inside an AI server when it answers your question", "dur": 4.4, "scrim": 0.28 } },
 
     { "at": 4.6, "overview": 2.8 },
     { "at": 5.4, "caption": { "text": "A real model, on a real machine.", "sub": "{{M.name}} · {{M.L}} layers · {{M.moe.experts}} experts · {{M.hw.title}}", "dur": 3.9 } },
@@ -43,9 +46,9 @@
     { "at": 45.0, "step": "stream" },
     { "at": 45.6, "caption": { "text": "And the answer streams back.", "sub": "{{q(T.reply.slice(0, 64))}}…", "dur": 3.6, "color": "#5b9cff" } },
 
-    { "at": 49.2, "overview": 0 },
+    { "at": 49.2, "overview": 0, "hide": [".topbar", "#labels"] },
     { "at": 49.2, "js": "document.getElementById('panel').hidden = true; document.body.classList.remove('panel-open'); window.__viz.S.panelW = 0;" },
-    { "at": 49.2, "view": "exterior", "dur": 5.5 },
-    { "at": 49.4, "card": { "title": "Every number here is real.", "sub": "Read from the model’s own files and the server, live. Try it on your model, on your hardware.", "url": "github.com/gaiato/anatomy-of-a-token", "dur": 6.6, "scrim": 0.8 } }
+    { "at": 49.2, "view": "exterior", "back": 2.1, "dur": 5.5 },
+    { "at": 49.4, "card": { "title": "Every number here is real.", "sub": "Read from the model’s own files and the server, live. Try it on your model, on your hardware.", "url": "github.com/gaiato/anatomy-of-a-token", "dur": 6.6, "scrim": 0.38 } }
   ]
 }

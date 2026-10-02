@@ -46,7 +46,7 @@ const url = `http://127.0.0.1:${server.address().port}/?demo&record${shot.query 
 /* ── Chrome over the DevTools protocol ── */
 const port = 9300 + Math.floor(Math.random() * 600);
 const prof = mkdtempSync(join(homedir(), '.cdp-rec-'));   // not /tmp: some hosts give Chrome a private /tmp
-const gl = flag('gpu') ? ['--enable-gpu', '--ignore-gpu-blocklist'] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
+const gl = flag('gpu') ? ['--enable-gpu', '--ignore-gpu-blocklist', '--force_high_performance_gpu'] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
 const chrome = spawn(process.env.CHROME || 'google-chrome', ['--headless=new', `--remote-debugging-port=${port}`, `--user-data-dir=${prof}`, ...gl,
   `--window-size=${vw},${vh}`, '--no-first-run', '--hide-scrollbars', '--mute-audio', '--force-color-profile=srgb', 'about:blank'], { stdio: 'ignore' });
 let ws; const pend = new Map(); let id = 0;
@@ -70,7 +70,8 @@ await send('Page.navigate', { url });
 let ok = false;
 for (let i = 0; i < 600 && !ok; i++) { await sleep(100); try { ok = await ev('window.__rec && (__rec.tick(50), __rec.ready())'); } catch { } }
 if (!ok) { console.error('page never became ready'); cleanup(); process.exit(1); }
-await ev('__rec.tick(600)');   // let the loading veil finish fading
+console.error('webgl: ' + await ev(`(() => { const g = document.createElement('canvas').getContext('webgl2'); const x = g && g.getExtension('WEBGL_debug_renderer_info'); return x ? g.getParameter(x.UNMASKED_RENDERER_WEBGL) : 'unknown'; })()`));   // says whether a GPU or SwiftShader draws the frames
+await ev('for (let i = 0; i < 90; i++) __rec.tick(1000 / 60)');   // 1.5 s of real frames: the loading veil and the sky's fade-in finish
 const { frames } = await ev(`__rec.start(${JSON.stringify(shot)})`);
 const chapters = await ev('__rec.chapters()');
 if (out || flag('chapters-only')) {   // FILE.chapters.json beside the video: what a viewer lists as chapters

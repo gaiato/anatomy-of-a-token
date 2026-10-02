@@ -46,26 +46,26 @@
     for (const cb of q.values()) run(cb, [t]);
   }
 
-  /* ── Overlay: captions and title cards ── */
+  /* ── Overlay: captions and title cards (rec-* class names: the page's theme already styles .card) ── */
   let ov = null;
   function overlay() {
     if (ov) return ov;
     const st = document.createElement('style');
     st.textContent = `
       #rec-ov{position:fixed;inset:0;z-index:40;pointer-events:none;font-family:Inter,system-ui,sans-serif;color:#f4f2ff}
-      #rec-ov .scrim{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(6,7,16,.55),rgba(6,7,16,.88));opacity:0}
-      #rec-ov .card{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;text-align:center;gap:14px;opacity:0;padding:0 8%}
-      #rec-ov .card h1{margin:0;font-size:68px;font-weight:700;letter-spacing:-.025em;line-height:1.02;text-shadow:0 4px 40px rgba(155,124,240,.45)}
-      #rec-ov .card p{margin:0;font-size:24px;font-weight:500;color:#c9c3e6;max-width:900px;line-height:1.35}
-      #rec-ov .card .url{font-family:'JetBrains Mono',monospace;font-size:21px;color:#b9a6ff;font-weight:500;margin-top:10px;letter-spacing:-.01em}
-      #rec-ov .cap{position:absolute;left:44px;bottom:46px;max-width:var(--capw,720px);opacity:0}
-      #rec-ov .cap b{display:block;font-size:34px;font-weight:700;letter-spacing:-.018em;line-height:1.12;text-shadow:0 2px 18px rgba(0,0,0,.85),0 0 2px rgba(0,0,0,.9)}
-      #rec-ov .cap span{display:block;margin-top:10px;font-size:18px;font-weight:500;color:#cfc9ea;line-height:1.35;text-shadow:0 1px 12px rgba(0,0,0,.9)}
-      #rec-ov .cap span:empty{display:none}
-      #rec-ov .cap::before{content:"";position:absolute;left:-18px;top:6px;bottom:6px;width:4px;border-radius:4px;background:var(--capc,#9b7cf0)}`;
+      #rec-ov .rec-scrim{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(6,7,16,.55),rgba(6,7,16,.88));opacity:0}
+      #rec-ov .rec-card{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;text-align:center;gap:14px;opacity:0;padding:0 8%}
+      #rec-ov .rec-card h1{margin:0;font-size:68px;font-weight:700;letter-spacing:-.025em;line-height:1.02;text-shadow:0 4px 40px rgba(155,124,240,.45)}
+      #rec-ov .rec-card p{margin:0;font-size:24px;font-weight:500;color:#c9c3e6;max-width:900px;line-height:1.35}
+      #rec-ov .rec-card .url{font-family:'JetBrains Mono',monospace;font-size:21px;color:#b9a6ff;font-weight:500;margin-top:10px;letter-spacing:-.01em}
+      #rec-ov .rec-cap{position:absolute;left:44px;bottom:46px;max-width:var(--capw,720px);opacity:0}
+      #rec-ov .rec-cap b{display:block;font-size:34px;font-weight:700;letter-spacing:-.018em;line-height:1.12;text-shadow:0 2px 18px rgba(0,0,0,.85),0 0 2px rgba(0,0,0,.9)}
+      #rec-ov .rec-cap span{display:block;margin-top:10px;font-size:18px;font-weight:500;color:#cfc9ea;line-height:1.35;text-shadow:0 1px 12px rgba(0,0,0,.9)}
+      #rec-ov .rec-cap span:empty{display:none}
+      #rec-ov .rec-cap::before{content:"";position:absolute;left:-18px;top:6px;bottom:6px;width:4px;border-radius:4px;background:var(--capc,#9b7cf0)}`;
     document.head.appendChild(st);
     ov = document.createElement('div'); ov.id = 'rec-ov';
-    ov.innerHTML = '<div class="scrim"></div><div class="card"><h1></h1><p></p><div class="url"></div></div><div class="cap"><b></b><span></span></div>';
+    ov.innerHTML = '<div class="rec-scrim"></div><div class="rec-card"><h1></h1><p></p><div class="url"></div></div><div class="rec-cap"><b></b><span></span></div>';
     document.body.appendChild(ov);
     return ov;
   }
@@ -107,7 +107,7 @@
       if (ev.caption && local >= ev.at && local <= ev.at + ev.caption.dur) cap = ev;
       if (ev.card && local >= ev.at && local <= ev.at + ev.card.dur) card = ev;
     }
-    const capEl = o.querySelector('.cap'), cardEl = o.querySelector('.card'), scrim = o.querySelector('.scrim');
+    const capEl = o.querySelector('.rec-cap'), cardEl = o.querySelector('.rec-card'), scrim = o.querySelector('.rec-scrim');
     if (cap) {
       if (capEl.dataset.at !== String(cap.at)) { capEl.dataset.at = cap.at; capEl.querySelector('b').textContent = fill(cap.caption.text); capEl.querySelector('span').textContent = fill(cap.caption.sub); capEl.style.setProperty('--capc', cap.caption.color || '#9b7cf0'); }
       const a = env(local, cap.at, cap.caption.dur); capEl.style.opacity = a; capEl.style.transform = `translateY(${(1 - a) * 10}px)`;
@@ -130,7 +130,7 @@
   window.__rec = {
     get t() { return t; },
     tick,
-    ready: () => !!(window.__viz && document.getElementById('loading')?.classList.contains('gone') && document.fonts.status === 'loaded'),
+    ready: () => !!(window.__viz && document.getElementById('loading')?.classList.contains('gone') && document.fonts.status === 'loaded' && (!window.__viz.S.sky || window.__viz.S.sky.ready)),
     start(s) {
       shot = s; t0 = t; fired = new Set(); orbits = [];
       if (s.capWidth) overlay().style.setProperty('--capw', s.capWidth + 'px');

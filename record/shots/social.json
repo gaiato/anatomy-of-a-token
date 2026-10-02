@@ -6,6 +6,7 @@
   "fps": 30,
   "duration": 3.2,
   "capWidth": 760,
+  "query": "skyat=2026-10-01T03:00:00Z",
   "timeline": [
     { "at": 0, "question": "Why does ice float on water?", "hide": [".journey", ".topbar"] },
     { "at": 0, "view": "overview", "dur": 0 },
