@@ -76,7 +76,9 @@ export function viewModel(profile) {
 function memoryMap(M, pack) {
   const hw = M.hw, w = M.weights, parts = w?.parts || {};
   const B = k => parts[k]?.bytes || 0;
-  const gpuTotal = hw.unified ? hw.mem_total_bytes : hw.gpus?.[0]?.mem_total_bytes;
+  const cpu = !hw.gpus?.length;   // no GPU found: the weights and cache live in system RAM, one pool like a unified machine
+  const one = hw.unified || cpu;
+  const gpuTotal = one ? hw.mem_total_bytes : hw.gpus[0].mem_total_bytes;
   if (!w || !gpuTotal) return null;
   const budget = M.kv.gmu ? gpuTotal * M.kv.gmu : null;
   const pleOff = M.has.ple && pack?.pleOffloaded;
@@ -84,7 +86,7 @@ function memoryMap(M, pack) {
   const kvBytes = M.kv.tokens && M.kvPerToken ? M.kv.tokens * M.kvPerToken : null;
   const R = [];
   R.push({ id: 'weights', band: 'gpu', bytes: gpuWeights, color: '#3987e5', src: 'weights', label: 'Model weights',
-    note: `Every tensor the GPU keeps resident while serving${M.quantMethod ? `, in the checkpoint’s ${Object.values(M.quant).filter((v, i, a) => a.indexOf(v) === i).slice(0, 3).join(' / ')} formats` : ''}.` });
+    note: `Every tensor the ${cpu ? 'server keeps in RAM' : 'GPU keeps resident'} while serving${M.quantMethod ? `, in the checkpoint’s ${Object.values(M.quant).filter((v, i, a) => a.indexOf(v) === i).slice(0, 3).join(' / ')} formats` : ''}.` });
   if (kvBytes) R.push({ id: 'kv', band: 'gpu', bytes: kvBytes, color: '#d9a326', src: M.kvPerTokenSrc === 'calc' ? 'calc' : M.kvPerTokenSrc,
     label: `KV cache · ${Math.round(M.kv.tokens).toLocaleString('en-US')} tokens`, note: `Room the server set aside for the keys and values of ${M.idx.attn.length + M.idx.sliding.length} attention layers, about ${(M.kvPerToken / 1024).toFixed(1)} KiB per token.` });
   if (B('mtp')) R.push({ id: 'mtp', band: 'gpu', bytes: B('mtp'), color: '#c084fc', src: 'weights', label: 'Draft (MTP) layer', note: 'The speculative-decoding drafter’s own weights.' });
@@ -93,10 +95,10 @@ function memoryMap(M, pack) {
     if (budget > used) R.push({ id: 'act', band: 'gpu', bytes: budget - used, color: '#64748b', src: 'calc', label: 'Activations · graphs · workspace', note: `The rest of the ${(budget / GiB).toFixed(1)} GiB GPU budget (${Math.round(M.kv.gmu * 100)}% of memory): CUDA graph pools, recurrent state, scratch space.` });
   }
   if (pleOff) R.push({ id: 'ple', band: 'host', bytes: B('ple'), color: '#199e70', src: 'weights', label: 'PLE n-gram table (page cache)', note: 'Memory-mapped from disk; rows stay in the page cache while they are hot.' });
-  const hostTotal = hw.unified ? hw.mem_total_bytes - (budget || R.reduce((a, r) => a + (r.band === 'gpu' ? r.bytes : 0), 0)) : hw.mem_total_bytes;
+  const hostTotal = one ? hw.mem_total_bytes - (budget || R.reduce((a, r) => a + (r.band === 'gpu' ? r.bytes : 0), 0)) : hw.mem_total_bytes;
   const hostUsed = R.filter(r => r.band === 'host').reduce((a, r) => a + r.bytes, 0);
-  if (hostTotal && hostTotal > hostUsed) R.push({ id: 'host', band: 'host', bytes: hostTotal - hostUsed, color: '#3a4152', src: 'calc', label: hw.unified ? 'Operating system and everything else' : 'System RAM', note: hw.unified ? 'What the host keeps for itself, once the GPU budget is set aside.' : 'CPU memory: the server process, tokenizer and operating system.' });
-  return { unified: !!hw.unified, total: hw.unified ? hw.mem_total_bytes : gpuTotal + (hw.mem_total_bytes || 0), gpuTotal, budget, regions: R };
+  if (hostTotal && hostTotal > hostUsed) R.push({ id: 'host', band: 'host', bytes: hostTotal - hostUsed, color: '#3a4152', src: 'calc', label: one ? 'Operating system and everything else' : 'System RAM', note: one ? (cpu ? 'The rest of system RAM: the operating system and everything else running here.' : 'What the host keeps for itself, once the GPU budget is set aside.') : 'CPU memory: the server process, tokenizer and operating system.' });
+  return { unified: one, cpu, total: one ? hw.mem_total_bytes : gpuTotal + (hw.mem_total_bytes || 0), gpuTotal, budget, regions: R };
 }
 
 /* ── The trace: one real request, from the probe or a snapshot ── */

@@ -28,7 +28,7 @@ export async function loadProfile() {
       var why = p.error;
     } catch (e) { why = e; }
     if (why) console.info('anatomy: no live profile:', why.message || why);
-    var reason = typeof why === 'string' ? 'The probe could not read the served model'
+    var reason = typeof why === 'string' ? 'The probe could not find the model’s files (start it with --search or --model-map)'
       : why?.status === 502 ? 'The probe is running but no model server answered'
       : why?.status && why.status !== 404 ? `The probe answered HTTP ${why.status}` : 'No probe answered';
   }

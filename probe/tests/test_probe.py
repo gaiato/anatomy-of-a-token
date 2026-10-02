@@ -137,7 +137,7 @@ class Launch(unittest.TestCase):
         argv = ["/usr/bin/python3", "/usr/local/bin/vllm", "serve", "m", "--api-key", "SECRET", "--max-num-seqs", "4", "--port", "8000",
                 "--speculative-config", '{"method":"mtp","num_speculative_tokens":3,"secret":"x"}', "--enable-chunked-prefill"]
         orig = launch._procs
-        launch._procs = lambda: iter([argv])
+        launch._procs = lambda: iter([("1", argv)])
         try:
             f = launch.flags(8000)
         finally:

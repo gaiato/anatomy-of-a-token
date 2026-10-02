@@ -72,6 +72,13 @@ class Probe:
         props = self.engine.props()
         root = props.get("model_path") or m["root"]
         path = profile.find_model_dir(root, m["id"], self.search, self.model_map)
+        if not path and root and not os.path.isabs(root):   # a path relative to where the engine was started
+            try:
+                cwd = launch.engine_cwd(urlparse(self.engine.base).port)
+            except Exception:
+                cwd = None
+            if cwd and os.path.exists(os.path.join(cwd, root)):
+                path = profile._snapshot(os.path.join(cwd, root))
         cfg, wsum, wsrc = None, None, None
         if path and os.path.isfile(path) and path.endswith(".gguf"):
             meta, wsum = weights.read_gguf(path)
@@ -100,6 +107,8 @@ class Probe:
         p = profile.build(cfg, wsum, wsrc, metrics, info, self.hardware())
         p["model"]["id"], p["model"]["repo"], p["model"]["path_kind"] = m["id"], m["root"], wsrc
         p["model"]["name"] = os.path.basename(m["root"].rstrip("/")) if "/snapshots/" in str(path) or not path else os.path.basename(str(path).rstrip("/"))
+        if wsrc == "gguf" and (cfg.get("_gguf") or {}).get("name"):   # the GGUF's own name beats its file name
+            p["model"]["name"] = cfg["_gguf"]["name"]
         return p
 
     def _cached_scan(self, d):
@@ -244,7 +253,7 @@ def make_handler(probe, allow_origin=None, web_root=None):
     return H
 
 
-def serve(probe, bind="0.0.0.0", port=1239, allow_origin=None, web_root=None):
+def serve(probe, bind="127.0.0.1", port=1239, allow_origin=None, web_root=None):
     httpd = ThreadingHTTPServer((bind, port), make_handler(probe, allow_origin, web_root))
     httpd.daemon_threads = True
     print(f"anatomy-probe on {bind}:{port} -> {', '.join(e.base for e in probe.engines)}" + (f", serving {web_root}" if web_root else ""), flush=True)

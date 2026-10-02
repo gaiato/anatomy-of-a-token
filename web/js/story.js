@@ -60,14 +60,14 @@ export function steps(M, ctx) {
       w && `The model has ${count(P.total)} parameters, the numbers it learned in training, stored in ${bytes(w.total_bytes)} of files. Nothing in it changes while it answers you: the same weights serve every request.`]),
     t3: join([...(hwp.t3 || []),
       M.bwCeiling && `For this model, one step must read about ${bytes(M.activeBytes)} of weights. At ${(hw.bandwidth / 1e9).toFixed(0)} GB/s that alone limits a single conversation to about ${M.bwCeiling.toFixed(0)} steps per second, before any arithmetic.`]),
-    facts: join([hw.gpus?.[0] && ['GPU', hw.gpus.map(g => g.name).join(', '), 'hw'], hw.mem_total_bytes && ['Memory visible to Linux', bytes(hw.mem_total_bytes) + (hw.unified ? ' (shared with the GPU)' : ''), 'hw'],
+    facts: join([hw.gpus?.[0] && ['GPU', hw.gpus.map(g => g.name).join(', '), 'hw'], hw.mem_total_bytes && ['System memory', bytes(hw.mem_total_bytes) + (hw.unified ? ' (shared with the GPU)' : ''), 'hw'],
       hw.cpu && ['CPU', `${hw.cpu.cores} cores · ${[...new Set(hw.cpu.models)].join(' + ')}`, 'hw'], ...(hwp.facts?.length ? hwp.facts : []),
       ['Engine', `${M.engine.label}${M.engine.version ? ' ' + M.engine.version : ''}`, 'engine'], ['Serving', M.id, 'engine'], w && ['Parameters', `${count(P.total)} (${bytes(w.total_bytes)})`, 'weights']]) });
 
   const mem = M.memory, kvR = mem?.regions.find(r => r.id === 'kv'), wR = mem?.regions.find(r => r.id === 'weights');
   add({ id: 'memory', phase: 0, station: 'memory', beat: 'memory', widget: 'memory', when: !!mem,
     title: 'The model, resident in memory', kicker: 'The floor of this scene, to scale',
-    t1: `Before any request arrives, the model is already loaded. Its weights, ${bytes(wR?.bytes)}, sit in ${mem?.unified ? 'the shared memory pool' : 'the GPU’s memory'} and stay there for as long as the server runs. The floor under the scene is that memory, drawn to scale.`,
+    t1: `Before any request arrives, the model is already loaded. Its weights, ${bytes(wR?.bytes)}, sit in ${mem?.cpu ? 'system RAM' : mem?.unified ? 'the shared memory pool' : 'the GPU’s memory'} and stay there for as long as the server runs. The floor under the scene is that memory, drawn to scale.`,
     t2: join([kvR && `The server also sets aside room for the KV cache: the working memory each conversation builds up as it goes. Here that is about ${bytes(kvR.bytes)}, enough for ${int(M.kv.tokens)} tokens across all conversations at once.`,
       mem?.budget && `The server was told to use ${Math.round(M.kv.gmu * 100)}% of ${mem.unified ? 'memory' : 'GPU memory'} (${bytes(mem.budget)}). Everything else it needs, it must fit inside that budget.`]),
     t3: join([w && `Why the weights are so large: ${count(P.total)} parameters at an average of ${(w.total_bytes * 8 / P.total).toFixed(1)} bits each. By part: ${Object.entries(M.quant).filter(([k]) => ['experts', 'attention', 'linear_attn', 'ffn', 'embed', 'head', '*'].includes(k)).map(([k, v]) => `${{ experts: 'experts', attention: 'attention', linear_attn: 'linear attention', ffn: 'feed-forward', embed: 'embedding', head: 'LM head', '*': 'all weights' }[k]} ${v}`).join(', ')}.`,

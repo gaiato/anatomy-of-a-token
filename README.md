@@ -29,22 +29,52 @@ Every number on the page carries a tag saying where it came from: `config.json`,
 
 ## Quick start
 
-You need Python 3.9+ (standard library only) on the machine that runs the model, and a vLLM or llama.cpp server.
+### 1. Look around first (demo, nothing to install)
 
 ```bash
-git clone https://github.com/gaiato/anatomy-of-a-token && cd anatomy-of-a-token/probe
-python3 -m anatomy_probe serve --engine http://127.0.0.1:8000 --web ../web
-# open http://<that machine>:1239/
+git clone https://github.com/gaiato/anatomy-of-a-token && cd anatomy-of-a-token/web
+python3 -m http.server 8000
+# open http://localhost:8000/
 ```
 
+The page runs on a saved capture of Qwen3.8-Flash-Next on an ASUS Ascent GX10 (`web/data/snapshot/`) and says so in a banner. Any static file server works; opening `index.html` straight from disk does not (browsers block modules on `file://`).
+
+### 2. See your own model (live)
+
+You need a model served by **vLLM** or **llama.cpp's `llama-server`**, and Python 3.9+ on the **same machine** (the probe reads the model's files from disk). Nothing to install: the probe is the Python standard library.
+
+```bash
+cd anatomy-of-a-token/probe
+python3 -m anatomy_probe serve --engine http://127.0.0.1:8080 --web ../web    # llama-server's default port
+python3 -m anatomy_probe serve --engine http://127.0.0.1:8000 --web ../web    # or vLLM's
+# open http://localhost:1239/
+```
+
+It worked when the banner is gone and the top bar names your model. If the page still says **Demo data**, the banner says why:
+
+| The banner says | What to do |
+|---|---|
+| No probe answered | Open the probe's address (`:1239`), not a separate static server. |
+| The probe is running but no model server answered | Check the `--engine` URL: `curl http://127.0.0.1:8080/v1/models` should list your model. |
+| The probe could not find the model's files | Point it at them: `--search DIR` (a folder that holds model folders or `.gguf` files) or `--model-map NAME=PATH`. |
+
+More options:
+
+- **Show it to others on your network:** add `--bind 0.0.0.0`, then open `http://<that machine>:1239/`. Anyone who can reach the page can ask your model short questions (48 tokens at most, one at a time); read **Privacy** first.
 - `--engine` can repeat: the first server that answers is the one described (e.g. vLLM, then a llama.cpp fallback).
-- The probe finds the checkpoint from what the server reports: an absolute path, the Hugging Face cache by repo id, or `--search DIR` / `--model-map NAME=PATH`.
-- `--hardware-name "My Workstation"` names the machine on the page.
+- `--hardware-name "My Workstation"` names the machine on the page (otherwise its GPU or host name).
 - If the server needs an API key, set `ANATOMY_API_KEY` rather than passing `--api-key`, so the key stays out of the process list. The probe uses it only to call the server; it never reaches the page.
+- Make a snapshot to share: `python3 -m anatomy_probe snapshot --engine URL --out web/data/mymodel --prompt "…"`, then open `?demo&snapshot=mymodel`.
 
-No server handy? Open `web/` with any static file server and add `?demo`: the page runs on the saved snapshot in `web/data/snapshot/` (a real capture from Qwen3.8-Flash-Next on an ASUS Ascent GX10).
+## What works
 
-Make your own snapshot to share: `python3 -m anatomy_probe snapshot --engine URL --out web/data/mymodel --prompt "…"`, then open `?demo&snapshot=mymodel`.
+| | |
+|---|---|
+| **Servers** | vLLM and llama.cpp `llama-server`: everything (exact tokens, top-5 probabilities, live counters, launch settings). Ollama, LM Studio and other OpenAI-compatible servers are not supported yet: they do not expose the tokenizer, and some not the model's files or probabilities. |
+| **Models** | Nothing to add: the page is built from whatever the server is serving. Any decoder-only transformer whose `config.json` or GGUF metadata the probe can read: dense or mixture-of-experts; multi-head, grouped-query, multi-query or latent (MLA) attention; sliding windows; hybrid linear-attention (Gated DeltaNet) and Mamba layers; MTP drafters. Weights as a safetensors folder (any folder or the Hugging Face cache) or a GGUF file, split or not. |
+| **Tested on** | Qwen3.8-Flash-Next NVFP4 on vLLM (NVIDIA GB10, unified memory); Qwen2.5-0.5B-Instruct Q4_K_M GGUF on llama.cpp (CPU only); Qwen3-VL-32B and Flash-Next configs in the unit tests. Please report others (see `CONTRIBUTING.md`). |
+| **Systems** | Linux: everything. Windows: works, without launch settings (no `/proc` to read them from). macOS: Apple-silicon GPU and memory are detected, but it has not been tested on a Mac yet. |
+| **Notes** | Every model gets the general explanations with its own real numbers. Hand-written model notes (packs) exist for Qwen3.8-Flash-Next only; `docs/PACKS.md` shows how to add one. |
 
 ## Privacy
 

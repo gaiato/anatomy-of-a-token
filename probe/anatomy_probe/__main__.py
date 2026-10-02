@@ -34,7 +34,7 @@ def main(argv=None):
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("serve")
     _common(s)
-    s.add_argument("--bind", default="0.0.0.0")
+    s.add_argument("--bind", default="127.0.0.1", help="address to listen on (default: this machine only; 0.0.0.0 lets others on your network ask questions of your model)")
     s.add_argument("--port", type=int, default=1239)
     s.add_argument("--allow-origin", help="CORS origin for the page, when it is not served from the same origin")
     s.add_argument("--web", help="also serve the page from this directory (the repo's web/), so one process is all you need")

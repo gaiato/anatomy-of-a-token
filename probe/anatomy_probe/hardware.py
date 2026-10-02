@@ -21,20 +21,56 @@ def _num(x):
 
 
 def _meminfo():
+    """{MemTotal, MemAvailable} in bytes: /proc/meminfo on Linux, sysctl/vm_stat on macOS, GlobalMemoryStatusEx on Windows."""
     out = {}
     try:
         with open("/proc/meminfo") as f:
             for line in f:
                 k, v = line.split(":", 1)
                 out[k] = int(v.split()[0]) * 1024
+        return out
     except OSError:
         pass
+    sysname = platform.system()
+    if sysname == "Darwin":
+        total = _num(_sh(["sysctl", "-n", "hw.memsize"]))
+        if total:
+            out["MemTotal"] = int(total)
+            vm, page = _sh(["vm_stat"]), 16384
+            for line in vm.splitlines():
+                if "page size of" in line:
+                    page = int(_num(line.split("page size of")[1].split()[0]) or page)
+            free = sum(int(_num(l.split(":")[1].strip(" .")) or 0) for l in vm.splitlines()
+                       if l.startswith(("Pages free", "Pages inactive", "Pages speculative", "Pages purgeable")))
+            if free:
+                out["MemAvailable"] = free * page
+    elif sysname == "Windows":
+        try:
+            import ctypes
+
+            class MS(ctypes.Structure):
+                _fields_ = [("len", ctypes.c_ulong), ("load", ctypes.c_ulong), ("total", ctypes.c_ulonglong), ("avail", ctypes.c_ulonglong),
+                            ("tp", ctypes.c_ulonglong), ("ap", ctypes.c_ulonglong), ("tv", ctypes.c_ulonglong), ("av", ctypes.c_ulonglong), ("ae", ctypes.c_ulonglong)]
+            m = MS(); m.len = ctypes.sizeof(MS)
+            if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(m)):
+                out["MemTotal"], out["MemAvailable"] = m.total, m.avail
+        except Exception:
+            pass
     return out
+
+
+def _apple_gpu():
+    """Apple silicon: the GPU is part of the chip and shares its memory (Metal; llama.cpp offloads to it by default)."""
+    if platform.system() != "Darwin" or platform.machine() != "arm64":
+        return []
+    chip = _sh(["sysctl", "-n", "machdep.cpu.brand_string"]) or "Apple silicon"
+    return [{"name": f"{chip} GPU", "mem_total_bytes": None, "mem_used_bytes": None, "power_w": None, "power_limit_w": None,
+             "temp_c": None, "util_pct": None, "sm_mhz": None, "unified": True}]
 
 
 def gpus():
     if not shutil.which("nvidia-smi"):
-        return []
+        return _apple_gpu()
     q = _sh(["nvidia-smi", "--query-gpu=name,memory.total,memory.used,power.draw,power.limit,temperature.gpu,utilization.gpu,clocks.sm",
              "--format=csv,noheader,nounits"])
     out = []
@@ -55,6 +91,8 @@ def cpu():
     for line in lscpu.splitlines():
         if line.startswith("Model name:"):
             models.append(line.split(":", 1)[1].strip())
+    if not models and platform.system() == "Darwin":
+        models = [x for x in [_sh(["sysctl", "-n", "machdep.cpu.brand_string"])] if x]
     if not models:
         models = [platform.processor() or platform.machine()]
     return {"models": models, "cores": n, "arch": platform.machine()}

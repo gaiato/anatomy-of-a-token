@@ -37,12 +37,14 @@ const GENERIC = {
   id: 'generic',
   match: () => true,
   title: hw => hw.name || hw.gpus?.[0]?.name || hw.hostname || 'This machine',
-  badge: hw => (hw.gpus?.[0]?.name || 'GPU SERVER').replace(/^NVIDIA\s+/i, '').toUpperCase().slice(0, 18),
+  badge: hw => (hw.gpus?.[0]?.name || (hw.unified ? 'GPU SERVER' : 'CPU SERVER')).replace(/^NVIDIA\s+/i, '').toUpperCase().slice(0, 18),
   kicker: hw => hw.gpus?.length ? `${hw.gpus.length > 1 ? hw.gpus.length + ' × ' : ''}${hw.gpus[0].name}` : 'The machine serving the model',
   bandwidth: hw => { const n = hw.gpus?.[0]?.name || ''; for (const [rx, b] of BW) if (rx.test(n)) return b; return null; },
   facts: () => [],
   t1: hw => hw.unified
     ? 'The CPU and GPU share one pool of memory, so the model, its cache and the operating system all live in the same RAM.'
+    : !hw.gpus?.length
+    ? 'No GPU was found here, so the CPU does all of the arithmetic, and the weights and the cache live in ordinary system RAM. It works the same way, only slower.'
     : 'The model’s weights and its cache live in the GPU’s own memory. The CPU runs the server process and the tokenizer.',
   t2: [], t3: [],
 };

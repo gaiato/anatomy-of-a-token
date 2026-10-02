@@ -13,7 +13,7 @@ Group=llm
 # EDIT: where you cloned this repo
 WorkingDirectory=/opt/anatomy-of-a-token/probe
 # EDIT: your inference server(s), first that answers wins; the folder that holds your checkpoints
-ExecStart=/usr/bin/python3 -m anatomy_probe serve --engine http://127.0.0.1:8000 --search /srv/models --web /opt/anatomy-of-a-token/web --port 1239
+ExecStart=/usr/bin/python3 -m anatomy_probe serve --engine http://127.0.0.1:8000 --search /srv/models --web /opt/anatomy-of-a-token/web --bind 0.0.0.0 --port 1239
 # EDIT: what the page should call this machine
 Environment=ANATOMY_HARDWARE_NAME=My Workstation
 Restart=always

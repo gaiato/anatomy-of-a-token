@@ -18,18 +18,20 @@ SPEC_KEEP = ("method", "num_speculative_tokens", "model")
 
 
 def _procs():
+    if not os.path.isdir("/proc"):   # macOS, Windows: no process table to read, so no launch flags
+        return
     for pid in os.listdir("/proc"):
         if pid.isdigit():
             try:
                 with open(f"/proc/{pid}/cmdline", "rb") as f:
-                    yield [a.decode("utf-8", "replace") for a in f.read().split(b"\0") if a]
+                    yield pid, [a.decode("utf-8", "replace") for a in f.read().split(b"\0") if a]
             except OSError:
                 continue
 
 
-def flags(port):
-    """{engine, ...allowlisted flags} for the vllm or llama-server process serving `port`, or {}."""
-    for argv in _procs():
+def _engine(port):
+    """(pid, argv, table, kind) of the vllm or llama-server process serving `port`, or None."""
+    for pid, argv in _procs():
         joined = " ".join(argv[:4])
         if "vllm" in joined and "serve" in argv:
             table, kind = VLLM, "vllm"
@@ -40,6 +42,24 @@ def flags(port):
         p = _port(argv)
         if p is not None and port is not None and p != port:
             continue
+        return pid, argv, table, kind
+    return None
+
+
+def engine_cwd(port):
+    """The engine's working directory, to resolve a model path it reports relative to it (llama-server -m models/x.gguf)."""
+    e = _engine(port)
+    try:
+        return os.readlink(f"/proc/{e[0]}/cwd") if e else None
+    except OSError:
+        return None
+
+
+def flags(port):
+    """{engine, ...allowlisted flags} for the vllm or llama-server process serving `port`, or {}."""
+    e = _engine(port)
+    if e:
+        pid, argv, table, kind = e
         out = {"engine": kind}
         i = 0
         while i < len(argv):
