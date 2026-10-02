@@ -1,0 +1,72 @@
+# Publishes web/ to GitHub Pages as a demo-only site (deploy/pages/config.js: no probe, saved snapshot).
+# Runs on every push to main that touches the page, and once a day to bundle fresh orbital elements for
+# the view from the ISS, so visitors' browsers never contact CelesTrak themselves.
+# One-time setup: Settings → Pages → Build and deployment → Source: GitHub Actions.
+name: Pages demo
+on:
+  push:
+    branches: [main]
+    paths: ['web/**', 'deploy/pages/**', 'docs/social-preview.png', '.github/workflows/pages.yml']
+  schedule:
+    - cron: '17 5 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    if: ${{ !github.event.repository.private }}   # skipped quietly until the repo is public
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: pages
+        uses: actions/configure-pages@v5
+      - name: Assemble the site
+        env:
+          BASE: ${{ steps.pages.outputs.base_url }}
+        run: |
+          set -euo pipefail
+          rm -rf _site && cp -r web _site
+          cp deploy/pages/config.js _site/config.js
+          cp docs/social-preview.png _site/social-preview.png
+          # Fresh ISS elements (one request a day); keep the bundled copy if CelesTrak is unavailable.
+          if curl -fsS --max-time 20 'https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=json' -o /tmp/iss.json \
+             && python3 -c "import json,sys; d=json.load(open('/tmp/iss.json')); d=d[0] if isinstance(d,list) else d; assert d['MEAN_MOTION']; json.dump(d,open('_site/data/sky/iss.json','w'),indent=1)"; then
+            echo "orbit: fresh elements"; else echo "orbit: kept the bundled elements"; fi
+          # Link previews (X, Slack, Discord...) need absolute URLs.
+          python3 - "$BASE" <<'PY'
+          import sys, html
+          base = sys.argv[1].rstrip('/') + '/'
+          title = 'Anatomy of a Token'
+          desc = 'A step-by-step, explorable 3D walkthrough of what happens inside a language-model server when it answers a question.'
+          tags = f'''<link rel="canonical" href="{base}">
+          <meta property="og:type" content="website">
+          <meta property="og:url" content="{base}">
+          <meta property="og:title" content="{title}">
+          <meta property="og:description" content="{html.escape(desc)}">
+          <meta property="og:image" content="{base}social-preview.png">
+          <meta property="og:image:width" content="1280">
+          <meta property="og:image:height" content="640">
+          <meta name="twitter:card" content="summary_large_image">
+          <meta name="twitter:title" content="{title}">
+          <meta name="twitter:description" content="{html.escape(desc)}">
+          <meta name="twitter:image" content="{base}social-preview.png">
+          '''
+          p = '_site/index.html'
+          s = open(p).read()
+          assert '</head>' in s
+          open(p, 'w').write(s.replace('</head>', tags + '</head>', 1))
+          PY
+          touch _site/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

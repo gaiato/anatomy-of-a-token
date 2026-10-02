@@ -2,6 +2,8 @@
 
 **A step-by-step, explorable 3D walkthrough of what happens inside a language-model server when it answers a question: your question, on your model, on your hardware.**
 
+**[Try the demo →](https://gaiato.github.io/anatomy-of-a-token/)** (runs in your browser on a saved capture; no install)
+
 ![The model server as an explorable 3D map, floating over the Earth in the view from the ISS](docs/social-preview.png)
 
 Type a question. The page runs it on the model your server is serving, then walks you through every stage: the tokens your text became, the vectors they turned into, every layer of the real architecture, the experts that fired, the probabilities of each word, the speculative drafts that were accepted or rejected, and every engine step of the reply as it streamed back. Each step has three depths:
@@ -119,6 +121,8 @@ python3 -m unittest discover -s probe/tests
 ## Deploying
 
 One process is enough: `serve --web ../web` serves the page and the API together on port 1239. To keep it running, `deploy/example/anatomy-probe.service` is a systemd unit to copy and edit.
+
+The hosted demo is this repo's `web/` published by `.github/workflows/pages.yml` with `deploy/pages/config.js` (no probe; the orbit is bundled and refreshed daily). A fork gets its own copy: Settings → Pages → Source: GitHub Actions.
 
 To put the page under a site you already run, serve `web/` statically and proxy `/api/` to the probe; `deploy/example/nginx.conf` shows the two locations (keep `proxy_buffering off`, the trace streams). `deploy/example/config.js` shows the page settings: where the API is, a back link to your site, the reply length.
 

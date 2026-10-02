@@ -14,7 +14,7 @@ const TIERS = ['Overview', 'Technical', 'Under the hood'];
 const DEFAULT_PROMPTS = ['Why does ice float on water?', 'Write a haiku about autumn leaves.', 'What is 17 times 23?'];
 const RECORD = new URLSearchParams(location.search).has('record');   // driven frame by frame by record/render.mjs
 
-const { profile, demo, reason } = await loadProfile();
+const { profile, demo, reason, hosted } = await loadProfile();
 const M = viewModel(profile);
 const snaps = await loadSnapshotTraces();
 let T = null;
@@ -29,7 +29,10 @@ document.title = `Anatomy of a Token · ${M.name}`;
 $('model-line').textContent = `${M.name} · ${M.engine.label} on ${M.hw.title}`;
 $('live-dot').className = demo ? 'dot idle' : 'dot warn';
 if (config.backLink) { const a = $('b-back'); a.href = config.backLink.href; a.querySelector('.lbl').textContent = config.backLink.label; a.hidden = false; }
-if (demo) { const b = $('banner'); b.innerHTML = `<b>Demo data.</b> ${esc(reason || 'No probe answered')}, so this page shows ${esc(M.name)} as captured on ${esc((profile.generated || '').slice(0, 10))}. <a href="#" id="howto">Run the probe</a> to see your own model. <button class="banner-x" aria-label="Dismiss">×</button>`; b.hidden = false; $('howto').href = config.repo || '#'; }
+if (demo) { const b = $('banner'), when = esc((profile.generated || '').slice(0, 10));
+  b.innerHTML = hosted ? `<b>Demo.</b> A saved run of ${esc(M.name)} on ${esc(M.hw.title)}, captured ${when}: real numbers, real tokens. <a href="#" id="howto">Run it on your own model</a> <button class="banner-x" aria-label="Dismiss">×</button>`
+    : `<b>Demo data.</b> ${esc(reason || 'No probe answered')}, so this page shows ${esc(M.name)} as captured on ${when}. <a href="#" id="howto">Run the probe</a> to see your own model. <button class="banner-x" aria-label="Dismiss">×</button>`;
+  b.hidden = false; $('howto').href = config.repo || '#'; }
 $('banner').addEventListener('click', e => { if (e.target.closest('.banner-x')) $('banner').hidden = true; });
 
 /* ── Scene ── */
@@ -222,7 +225,7 @@ const live = { on: false, feed: null, state: null };
 const K = M.spec?.k || 0;
 $('acc').innerHTML = Array.from({ length: K }, (_, j) => `<i id="a${j}"></i>`).join(''); $('hud-acc').hidden = !K;
 async function toggleLive() {
-  if (demo) { toast('Live mode needs the probe: this page is showing saved data.'); return; }
+  if (demo) { toast(hosted ? 'Live mode animates the scene from your own server’s counters: run the probe beside your model to try it.' : 'Live mode needs the probe: this page is showing saved data.'); return; }
   live.on = !live.on; S.live = live.on; $('b-live').setAttribute('aria-pressed', live.on); $('hud').hidden = !live.on; document.body.classList.toggle('live', live.on);
   if (!live.on) { live.feed?.stop(); S.resetLive(); $('live-dot').className = 'dot warn'; return; }
   const { LiveFeed } = await import('./live.js');

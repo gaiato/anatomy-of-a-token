@@ -1,5 +1,7 @@
 # Contributing
 
+This is a home-lab project, maintained on a best-effort basis: issues and pull requests are welcome, and answers may take a while.
+
 The most useful contributions are **packs** and **reports from models the page has not met yet**.
 
 - **Try it on your model.** If the scene or a step looks wrong for your architecture, open an issue with the output of `python3 -m anatomy_probe profile --config path/to/config.json --weights path/to/checkpoint` (it reads headers only and holds no paths or keys). That profile is usually enough to reproduce the problem.

@@ -20,6 +20,7 @@ async function getJSON(url, opts = {}, timeout = 6000) {
 
 /** {profile, demo, reason}. Demo when the probe is unreachable or cannot find the checkpoint. */
 export async function loadProfile() {
+  if (!CFG.api) return { profile: await getJSON(CFG.snapshot + 'profile.json'), demo: true, hosted: true };   // a demo-only site (api: null), e.g. GitHub Pages
   const force = new URLSearchParams(location.search).has('demo');
   if (!force) {
     try {
